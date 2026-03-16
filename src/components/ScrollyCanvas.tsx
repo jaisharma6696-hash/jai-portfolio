@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import { useScroll, useMotionValueEvent } from "framer-motion";
 import Overlay from "./Overlay";
 
@@ -8,43 +8,36 @@ interface ScrollyCanvasProps {
   frameCount: number;
 }
 
+// How many frames to preload before showing the sequence
+const INITIAL_BATCH = 15;
+
 export default function ScrollyCanvas({ frameCount }: ScrollyCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [images, setImages] = useState<HTMLImageElement[]>([]);
-  const [imagesLoaded, setImagesLoaded] = useState(false);
+  const imagesRef = useRef<(HTMLImageElement | null)[]>(new Array(frameCount).fill(null));
+  const currentFrameRef = useRef(0);
+  const rafRef = useRef<number | null>(null);
 
-  // Framer Motion scroll hook
+  // True once the first INITIAL_BATCH frames are ready
+  const [initialReady, setInitialReady] = useState(false);
+
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end end"],
   });
 
-  // Map scroll progress to frame index
-  useMotionValueEvent(scrollYProgress, "change", (latest) => {
-    if (!imagesLoaded || images.length === 0 || !canvasRef.current) return;
-    
-    // Calculate the current frame based on progress (0 to frameCount - 1)
-    const currentFrame = Math.min(
-      frameCount - 1,
-      Math.max(0, Math.floor(latest * frameCount))
-    );
-
+  // Draw a single frame onto the canvas
+  const drawFrame = useCallback((frameIdx: number) => {
     const canvas = canvasRef.current;
+    const img = imagesRef.current[frameIdx];
+    if (!canvas || !img || !img.complete || img.naturalWidth === 0) return;
+
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const img = images[currentFrame];
-    if (!img) return;
-
-    // Render image using object-fit: cover logic
     const canvasRatio = canvas.width / canvas.height;
     const imgRatio = img.width / img.height;
-
-    let drawWidth = canvas.width;
-    let drawHeight = canvas.height;
-    let offsetX = 0;
-    let offsetY = 0;
+    let drawWidth = canvas.width, drawHeight = canvas.height, offsetX = 0, offsetY = 0;
 
     if (imgRatio > canvasRatio) {
       drawWidth = canvas.height * imgRatio;
@@ -56,89 +49,112 @@ export default function ScrollyCanvas({ frameCount }: ScrollyCanvasProps) {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+  }, []);
+
+  // Update frame based on scroll — requestAnimationFrame throttled
+  useMotionValueEvent(scrollYProgress, "change", (latest) => {
+    if (!initialReady) return;
+    const targetFrame = Math.min(frameCount - 1, Math.max(0, Math.floor(latest * frameCount)));
+    if (targetFrame === currentFrameRef.current) return;
+    currentFrameRef.current = targetFrame;
+
+    if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => drawFrame(targetFrame));
   });
 
-  // Preload images
+  // Load images — initial batch first, then the rest
   useEffect(() => {
-    const loadImages = async () => {
-      const loadedImages: HTMLImageElement[] = [];
-      let loadedCount = 0;
+    const images = imagesRef.current;
+    let initialLoadedCount = 0;
 
-      for (let i = 1; i <= frameCount; i++) {
-        const img = new Image();
-        // Assuming format like `frame_0001.webp`
-        const padIndex = i.toString().padStart(4, "0");
-        img.src = `/sequence/frame_${padIndex}.webp`;
+    const loadImage = (i: number) => {
+      const img = new Image();
+      const padIndex = (i + 1).toString().padStart(4, "0");
+      img.src = `/sequence/frame_${padIndex}.webp`;
 
-        img.onload = () => {
-          loadedCount++;
-          if (loadedCount === frameCount) {
-            setImagesLoaded(true);
-            
-            // Draw first frame once loaded
-            if (canvasRef.current) {
-                const ctx = canvasRef.current.getContext("2d");
-                const canvasRatio = canvasRef.current.width / canvasRef.current.height;
-                const imgRatio = loadedImages[0].width / loadedImages[0].height;
+      img.onload = () => {
+        images[i] = img;
 
-                let drawWidth = canvasRef.current.width;
-                let drawHeight = canvasRef.current.height;
-                let offsetX = 0;
-                let offsetY = 0;
+        // Draw frame 0 as soon as it arrives
+        if (i === 0) {
+          requestAnimationFrame(() => drawFrame(0));
+        }
 
-                if (imgRatio > canvasRatio) {
-                  drawWidth = canvasRef.current.height * imgRatio;
-                  offsetX = (canvasRef.current.width - drawWidth) / 2;
-                } else {
-                  drawHeight = canvasRef.current.width / imgRatio;
-                  offsetY = (canvasRef.current.height - drawHeight) / 2;
-                }
-                
-                ctx?.drawImage(loadedImages[0], offsetX, offsetY, drawWidth, drawHeight);
-            }
-          }
-        };
-        img.onerror = () => {
-          // Handle missing images gently for robust degraded performance
-          loadedCount++;
-          if (loadedCount === frameCount) {
-            setImagesLoaded(true);
+        if (i < INITIAL_BATCH) {
+          initialLoadedCount++;
+          if (initialLoadedCount >= INITIAL_BATCH) {
+            setInitialReady(true);
           }
         }
-        loadedImages.push(img);
-      }
-      setImages(loadedImages);
+      };
+
+      img.onerror = () => {
+        // Graceful: treat as loaded so we don't block forever
+        if (i < INITIAL_BATCH) {
+          initialLoadedCount++;
+          if (initialLoadedCount >= INITIAL_BATCH) {
+            setInitialReady(true);
+          }
+        }
+      };
     };
 
-    loadImages();
-  }, [frameCount]);
+    // Load initial batch first (frames 0–INITIAL_BATCH)
+    for (let i = 0; i < Math.min(INITIAL_BATCH, frameCount); i++) {
+      loadImage(i);
+    }
 
-  // Handle Canvas Resize
+    // Load remaining frames after a short delay so initial batch gets priority bandwidth
+    const remainingTimer = setTimeout(() => {
+      for (let i = INITIAL_BATCH; i < frameCount; i++) {
+        loadImage(i);
+      }
+    }, 800);
+
+    return () => clearTimeout(remainingTimer);
+  }, [frameCount, drawFrame]);
+
+  // Canvas resize handler
   useEffect(() => {
     const handleResize = () => {
       if (canvasRef.current) {
         canvasRef.current.width = window.innerWidth;
         canvasRef.current.height = window.innerHeight;
-        // Re-render the current frame (will happen naturally on next scroll or can be triggered here if strictly needed)
+        drawFrame(currentFrameRef.current);
       }
     };
-
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  }, [drawFrame]);
 
   return (
     <div ref={containerRef} className="relative h-[800vh] w-full bg-slate-950">
       <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden">
-        {!imagesLoaded && (
-          <div className="absolute inset-0 flex items-center justify-center z-20 text-white/50 text-sm tracking-widest uppercase">
-            Loading Sequence...
+        {!initialReady && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center z-20 gap-4">
+            {/* Cinematic loading indicator */}
+            <div className="flex items-end gap-1 h-5">
+              {[1,1.4,0.8,1.2,0.9,1.1,0.7].map((s, i) => (
+                <div
+                  key={i}
+                  className="w-[2px] bg-white/30 rounded-full animate-pulse"
+                  style={{
+                    height: `${Math.round(s * 14)}px`,
+                    animationDelay: `${i * 0.12}s`,
+                    animationDuration: "1s"
+                  }}
+                />
+              ))}
+            </div>
+            <span className="text-white/25 text-xs font-mono tracking-[0.4em] uppercase">
+              Initialising
+            </span>
           </div>
         )}
         <canvas
           ref={canvasRef}
-          className="w-full h-full object-cover z-0"
+          className={`w-full h-full object-cover z-0 transition-opacity duration-700 ${initialReady ? "opacity-100" : "opacity-0"}`}
         />
         <Overlay scrollProgress={scrollYProgress} />
       </div>

@@ -3,223 +3,129 @@
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 
-// A rich cinematic ambient engine built entirely with the Web Audio API.
-// Architecture: 
-//   - 4 detuned oscillator layers per chord note (sub, warm, air, shimmer)
-//   - Convolver-based reverb (impulse response synthesized inline)
-//   - Slow LFO on gain for gentle breathing / pulsing
-//   - Chord progression that slowly cycles every 8 seconds
-//   - Stereo panning spread for width and depth
-
-const CHORDS = [
-  [65.41, 82.41, 98.00],   // C2, E2, G2 — C Major (open, majestic)
-  [73.42, 87.31, 110.00],  // D2, F2, A2 — D Minor (introspective)
-  [55.00, 73.42, 87.31],   // A1, D2, F2 — A Minor (depth, gravity)
-  [61.74, 77.78, 98.00],   // B1, Eb2, G2 — B dim-flavored (tension, forward)
-];
-
-function buildReverb(ctx: AudioContext): ConvolverNode {
-  const convolver = ctx.createConvolver();
-  const sampleRate = ctx.sampleRate;
-  const length = sampleRate * 4; // 4-second reverb tail
-  const impulse = ctx.createBuffer(2, length, sampleRate);
-  for (let c = 0; c < 2; c++) {
-    const channel = impulse.getChannelData(c);
-    for (let i = 0; i < length; i++) {
-      channel[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 2.5);
-    }
-  }
-  convolver.buffer = impulse;
-  return convolver;
-}
-
-function buildOscLayer(
-  ctx: AudioContext,
-  freq: number,
-  type: OscillatorType,
-  detune: number,
-  gainVal: number,
-  pan: number,
-  destination: AudioNode
-) {
-  const panner = ctx.createStereoPanner();
-  panner.pan.value = pan;
-  panner.connect(destination);
-
-  const gainNode = ctx.createGain();
-  gainNode.gain.value = gainVal;
-  gainNode.connect(panner);
-
-  const osc = ctx.createOscillator();
-  osc.type = type;
-  osc.frequency.value = freq;
-  osc.detune.value = detune;
-  osc.connect(gainNode);
-  osc.start();
-  return { osc, gainNode };
-}
+// Reliable cinematic ambient drone using Web Audio API.
+// Architecture: Sub + warm triangle oscillators → lowpass filter → reverb → master gain
+// LFO gently modulates gain for a "breathing" effect.
 
 export default function MusicPlayer() {
   const [isPlaying, setIsPlaying] = useState(false);
-  const engineRef = useRef<{
-    ctx: AudioContext;
-    masterGain: GainNode;
-    layers: { osc: OscillatorNode; gainNode: GainNode }[];
-    lfo: OscillatorNode;
-    chordIndex: number;
-    chordTimer: ReturnType<typeof setInterval> | null;
-  } | null>(null);
+  const ctxRef = useRef<AudioContext | null>(null);
+  const masterRef = useRef<GainNode | null>(null);
+  const startedRef = useRef(false);
 
-  const initEngine = () => {
-    const CtxClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    const ctx = new CtxClass();
+  const buildReverb = (ctx: AudioContext) => {
+    const conv = ctx.createConvolver();
+    const sr = ctx.sampleRate;
+    const len = sr * 3;
+    const buf = ctx.createBuffer(2, len, sr);
+    for (let c = 0; c < 2; c++) {
+      const ch = buf.getChannelData(c);
+      for (let i = 0; i < len; i++) {
+        ch[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.2);
+      }
+    }
+    conv.buffer = buf;
+    return conv;
+  };
 
-    // Master gain (start silent)
-    const masterGain = ctx.createGain();
-    masterGain.gain.value = 0;
-    masterGain.connect(ctx.destination);
+  const startEngine = (ctx: AudioContext, master: GainNode) => {
+    if (startedRef.current) return;
+    startedRef.current = true;
 
-    // Reverb send
     const reverb = buildReverb(ctx);
     const reverbGain = ctx.createGain();
-    reverbGain.gain.value = 0.6;
+    reverbGain.gain.value = 0.55;
     reverb.connect(reverbGain);
-    reverbGain.connect(masterGain);
+    reverbGain.connect(master);
 
-    // Dry bus
     const dryGain = ctx.createGain();
-    dryGain.gain.value = 0.4;
-    dryGain.connect(masterGain);
+    dryGain.gain.value = 0.45;
+    dryGain.connect(master);
 
-    // Low-pass filter on dry for warmth
     const filter = ctx.createBiquadFilter();
     filter.type = "lowpass";
-    filter.frequency.value = 800;
-    filter.Q.value = 0.5;
+    filter.frequency.value = 700;
+    filter.Q.value = 0.4;
     filter.connect(dryGain);
-
-    // Also send filtered to reverb
     filter.connect(reverb);
 
-    const layers: { osc: OscillatorNode; gainNode: GainNode }[] = [];
+    // C2 sub bass
+    const sub = ctx.createOscillator();
+    sub.type = "sine";
+    sub.frequency.value = 65.41;
+    const subG = ctx.createGain();
+    subG.gain.value = 0.45;
+    sub.connect(subG);
+    subG.connect(filter);
+    sub.start();
 
-    const startChord = (freqs: number[]) => {
-      freqs.forEach((freq, i) => {
-        const pan = (i - 1) * 0.5; // -0.5, 0, 0.5
-        // Sub bass sine
-        layers.push(buildOscLayer(ctx, freq * 0.5, "sine", 0, 0.25, pan * 0.2, filter));
-        // Warm triangle
-        layers.push(buildOscLayer(ctx, freq, "triangle", -8, 0.12, pan, filter));
-        // Slightly detuned sine for warmth
-        layers.push(buildOscLayer(ctx, freq, "sine", 8, 0.10, -pan, filter));
-        // High shimmer sine (2 octaves up, very quiet)
-        layers.push(buildOscLayer(ctx, freq * 4, "sine", 0, 0.02, pan * 0.8, filter));
-      });
-    };
+    // G2 fifth - warmth
+    const fifth = ctx.createOscillator();
+    fifth.type = "triangle";
+    fifth.frequency.value = 98.0;
+    fifth.detune.value = -6;
+    const fifthG = ctx.createGain();
+    fifthG.gain.value = 0.22;
+    fifth.connect(fifthG);
+    fifthG.connect(filter);
+    fifth.start();
 
-    startChord(CHORDS[0]);
+    // E2 - colour
+    const third = ctx.createOscillator();
+    third.type = "sine";
+    third.frequency.value = 82.41;
+    third.detune.value = 4;
+    const thirdG = ctx.createGain();
+    thirdG.gain.value = 0.15;
+    third.connect(thirdG);
+    thirdG.connect(filter);
+    third.start();
 
-    // Breathing LFO on master gain
+    // LFO breathing
     const lfo = ctx.createOscillator();
     const lfoGain = ctx.createGain();
-    lfoGain.gain.value = 0.018; // subtle ±1.8% volume swell
+    lfoGain.gain.value = 0.015;
     lfo.type = "sine";
-    lfo.frequency.value = 0.07; // one breath every ~14s
+    lfo.frequency.value = 0.08;
     lfo.connect(lfoGain);
-    lfoGain.connect(masterGain.gain);
+    lfoGain.connect(master.gain);
     lfo.start();
-
-    engineRef.current = {
-      ctx,
-      masterGain,
-      layers,
-      lfo,
-      chordIndex: 0,
-      chordTimer: null,
-    };
   };
 
-  const startChordCycle = () => {
-    if (!engineRef.current) return;
-    const eng = engineRef.current;
+  const togglePlay = async () => {
+    // Create AudioContext on first user interaction (required by browser)
+    if (!ctxRef.current) {
+      const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const ctx = new Ctx();
+      ctxRef.current = ctx;
 
-    const cycle = () => {
-      eng.chordIndex = (eng.chordIndex + 1) % CHORDS.length;
-      const freqs = CHORDS[eng.chordIndex];
-      const ctx = eng.ctx;
+      const master = ctx.createGain();
+      master.gain.value = 0;
+      master.connect(ctx.destination);
+      masterRef.current = master;
 
-      // Transition: slowly ramp gain down/up on each layer
-      eng.layers.forEach(({ gainNode }) => {
-        gainNode.gain.setTargetAtTime(0, ctx.currentTime, 3);
-      });
-
-      // Fade in new chord after 3s
-      setTimeout(() => {
-        if (!engineRef.current) return;
-        const newLayers: { osc: OscillatorNode; gainNode: GainNode }[] = [];
-
-        // Build the new chord's output bus inline
-        const reverbNode = buildReverb(ctx);
-        const reverbGain = ctx.createGain();
-        reverbGain.gain.value = 0.6;
-        reverbNode.connect(reverbGain);
-        reverbGain.connect(engineRef.current.masterGain);
-
-        const dryG = ctx.createGain();
-        dryG.gain.value = 0.4;
-        dryG.connect(engineRef.current.masterGain);
-
-        const filt = ctx.createBiquadFilter();
-        filt.type = "lowpass";
-        filt.frequency.value = 800;
-        filt.Q.value = 0.5;
-        filt.connect(dryG);
-        filt.connect(reverbNode);
-
-        freqs.forEach((freq, i) => {
-          const pan = (i - 1) * 0.5;
-          newLayers.push(buildOscLayer(ctx, freq * 0.5, "sine", 0, 0, pan * 0.2, filt));
-          newLayers.push(buildOscLayer(ctx, freq, "triangle", -8, 0, pan, filt));
-          newLayers.push(buildOscLayer(ctx, freq, "sine", 8, 0, -pan, filt));
-          newLayers.push(buildOscLayer(ctx, freq * 4, "sine", 0, 0, pan * 0.8, filt));
-        });
-
-        // Ramp new layers in
-        newLayers.forEach(({ gainNode }, idx) => {
-          const targetGain = idx % 4 === 0 ? 0.25 : idx % 4 === 1 ? 0.12 : idx % 4 === 2 ? 0.10 : 0.02;
-          gainNode.gain.setTargetAtTime(targetGain, ctx.currentTime, 4);
-        });
-
-        // Stop old layers
-        eng.layers.forEach(({ osc }) => {
-          try { osc.stop(ctx.currentTime + 12); } catch { /* ignore */ }
-        });
-
-        eng.layers.length = 0;
-        eng.layers.push(...newLayers);
-      }, 3000);
-    };
-
-    eng.chordTimer = setInterval(cycle, 12000); // change chord every 12s
-  };
-
-  const togglePlay = () => {
-    if (!engineRef.current) {
-      initEngine();
+      // Start oscillators immediately after context creation
+      startEngine(ctx, master);
     }
 
-    const eng = engineRef.current!;
-    const ctx = eng.ctx;
+    const ctx = ctxRef.current;
+    const master = masterRef.current!;
 
-    if (ctx.state === "suspended") ctx.resume();
+    // Resume if browser suspended it
+    if (ctx.state === "suspended") {
+      await ctx.resume();
+    }
 
     if (isPlaying) {
-      eng.masterGain.gain.setTargetAtTime(0, ctx.currentTime, 2);
-      if (eng.chordTimer) clearInterval(eng.chordTimer);
-      eng.chordTimer = null;
+      // Fade out over 2s
+      master.gain.cancelScheduledValues(ctx.currentTime);
+      master.gain.setValueAtTime(master.gain.value, ctx.currentTime);
+      master.gain.linearRampToValueAtTime(0, ctx.currentTime + 2);
     } else {
-      eng.masterGain.gain.setTargetAtTime(0.22, ctx.currentTime, 2.5);
-      startChordCycle();
+      // Fade in over 3s
+      master.gain.cancelScheduledValues(ctx.currentTime);
+      master.gain.setValueAtTime(0, ctx.currentTime);
+      master.gain.linearRampToValueAtTime(0.25, ctx.currentTime + 3);
     }
 
     setIsPlaying(!isPlaying);
@@ -227,10 +133,7 @@ export default function MusicPlayer() {
 
   useEffect(() => {
     return () => {
-      if (engineRef.current) {
-        if (engineRef.current.chordTimer) clearInterval(engineRef.current.chordTimer);
-        engineRef.current.ctx.close().catch(() => {});
-      }
+      ctxRef.current?.close().catch(() => {});
     };
   }, []);
 
@@ -246,21 +149,19 @@ export default function MusicPlayer() {
         className="flex items-center gap-3 px-4 py-2 bg-slate-950/80 backdrop-blur-md border border-white/10 rounded-full hover:bg-white/5 transition-colors group shadow-2xl"
         aria-label={isPlaying ? "Turn sound off" : "Turn sound on"}
       >
-        {/* Animated equalizer bars */}
+        {/* Equalizer bars */}
         <div className="flex items-end gap-[3px] h-4">
-          {[1, 1.4, 0.8, 1.2, 0.9].map((scale, i) => (
+          {[14, 10, 18, 12, 16].map((h, i) => (
             <div
               key={i}
-              className={`w-[3px] rounded-full bg-amber-500/80 transition-all duration-300 ${
-                isPlaying
-                  ? `animate-[pulse_${(0.7 + i * 0.2).toFixed(1)}s_ease-in-out_infinite]`
-                  : "h-[3px]"
-              }`}
-              style={isPlaying ? { height: `${Math.round(scale * 10)}px` } : {}}
+              className="w-[3px] rounded-full bg-amber-500/80 transition-all duration-500"
+              style={{
+                height: isPlaying ? `${h}px` : "3px",
+                animation: isPlaying ? `pulse ${0.6 + i * 0.15}s ease-in-out infinite alternate` : "none",
+              }}
             />
           ))}
         </div>
-
         <span className="text-xs font-mono uppercase tracking-[0.2em] text-amber-500/70 group-hover:text-amber-400 transition-colors">
           {isPlaying ? "Sound [ON]" : "Sound [OFF]"}
         </span>
