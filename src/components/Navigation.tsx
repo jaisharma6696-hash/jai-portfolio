@@ -34,7 +34,7 @@ export default function Navigation() {
       className="fixed top-0 left-0 right-0 z-50 py-6 px-8 md:px-12 flex items-center justify-between pointer-events-none"
     >
       <div 
-        className="text-white font-light tracking-[0.15em] text-sm cursor-pointer pointer-events-auto hover:text-white/70 transition-colors drop-shadow-md" 
+        className="font-[family:var(--font-cormorant)] text-white font-light tracking-[0.12em] text-base md:text-lg cursor-pointer pointer-events-auto hover:text-white/70 transition-colors drop-shadow-md italic" 
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth'})}
       >
         Jai Vardhan Sharma

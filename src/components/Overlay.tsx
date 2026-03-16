@@ -49,8 +49,8 @@ export default function Overlay({ scrollProgress }: OverlayProps) {
         className="absolute inset-0 flex flex-col items-center justify-center p-6 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent"
         style={{ y: y1, opacity: op1 }}
       >
-        <h1 className="text-5xl md:text-7xl lg:text-8xl font-light tracking-tight text-center drop-shadow-xl mb-6">
-          Jai Vardhan <span className="font-medium">Sharma</span>
+        <h1 className="font-[family:var(--font-cormorant)] text-5xl md:text-7xl lg:text-9xl font-light tracking-tight text-center drop-shadow-xl mb-6 italic">
+          Jai Vardhan <span className="font-normal not-italic">Sharma</span>
         </h1>
         <p className="text-lg md:text-xl text-white/90 font-light tracking-widest uppercase mb-8">
           Strategy. <span className="text-white/50">Brands.</span> Systems.
