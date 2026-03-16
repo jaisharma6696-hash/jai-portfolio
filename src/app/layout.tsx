@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import { Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
 
 const geistSans = localFont({
@@ -14,18 +13,27 @@ const geistMono = localFont({
   weight: "100 900",
 });
 
-// Premium editorial serif — used for the name/display headings
-const cormorant = Cormorant_Garamond({
-  subsets: ["latin"],
-  variable: "--font-cormorant",
-  weight: ["300", "400", "500", "600"],
-  style: ["normal", "italic"],
-  display: "swap",
-});
+const META_TITLE = "Jai Vardhan Sharma | Strategy, Transformation & Ventures";
+const META_DESC =
+  "Strategy consultant, transformation leader, and venture builder exploring ideas across businesses, technology, and brands.";
+const META_URL = "https://www.jaivardhansharma.com";
 
 export const metadata: Metadata = {
-  title: "Jai Vardhan Sharma — Strategist · Founder · Builder",
-  description: "Building ventures, systems, and ideas that scale.",
+  title: META_TITLE,
+  description: META_DESC,
+  metadataBase: new URL(META_URL),
+  openGraph: {
+    type: "website",
+    url: META_URL,
+    title: META_TITLE,
+    description: META_DESC,
+    siteName: "Jai Vardhan Sharma",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: META_TITLE,
+    description: META_DESC,
+  },
 };
 
 export default function RootLayout({
@@ -35,9 +43,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} ${cormorant.variable} antialiased`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         {children}
       </body>
     </html>
