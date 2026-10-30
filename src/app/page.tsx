@@ -2,6 +2,7 @@
 
 import ScrollyCanvas from "@/components/ScrollyCanvas";
 import Journey from "@/components/Journey";
+import BuildLab from "@/components/BuildLab";
 import Projects from "@/components/Projects";
 import PsychologicalStack from "@/components/PsychologicalStack";
 import ExperienceSnapshot from "@/components/ExperienceSnapshot";
@@ -45,6 +46,9 @@ export default function Home() {
       <div className="relative z-10">
         {/* 2. Story / Timeline */}
         <Journey />
+
+        {/* 3. Build Lab / Codenamed builds map */}
+        <BuildLab />
 
         {/* 3. Capabilities / What Jai Builds */}
         <Projects />

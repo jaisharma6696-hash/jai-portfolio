@@ -5,6 +5,7 @@ import { motion, useScroll, useMotionValueEvent, AnimatePresence } from "framer-
 
 const NAV_ITEMS = [
   { label: "Journey", id: "journey" },
+  { label: "Builds", id: "builds" },
   { label: "Work", id: "work" },
   { label: "Architecture", id: "stack" },
   { label: "Contact", id: "contact" },
