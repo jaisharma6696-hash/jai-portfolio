@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { SplitReveal } from "@/components/fx/Reveal";
+import SnapCarousel from "@/components/fx/SnapCarousel";
 import { EASE } from "@/lib/motion";
 
 // Chamfered corners: big cut top-left, small cut bottom-right.
@@ -37,7 +38,7 @@ const STACK_LAYERS = [
 
 export default function PsychologicalStack() {
   return (
-    <section id="stack" className="relative py-32 bg-slate-950 border-t border-white/5 z-10 overflow-hidden">
+    <section id="stack" className="relative py-24 md:py-32 bg-slate-950 border-t border-white/5 z-10 overflow-hidden">
       
       {/* Background Graphic Element */}
       <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/3 opacity-10 pointer-events-none">
@@ -70,7 +71,7 @@ export default function PsychologicalStack() {
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
-          className="max-w-4xl mx-auto bg-gradient-to-br from-white/[0.05] to-transparent border border-white/10 p-8 md:p-12 rounded-3xl mb-24 text-center backdrop-blur-xl shadow-2xl"
+          className="max-w-4xl mx-auto bg-gradient-to-br from-white/[0.05] to-transparent border border-white/10 p-7 md:p-12 rounded-3xl mb-14 md:mb-24 text-center backdrop-blur-xl shadow-2xl"
         >
           <p className="text-3xl md:text-5xl font-display italic leading-snug text-white/90">
             &ldquo;A systems builder who treats ambiguity as raw material — and turns it into architecture.&rdquo;
@@ -78,7 +79,18 @@ export default function PsychologicalStack() {
         </motion.div>
 
         {/* The Layers — staggered chamfered cards */}
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="md:hidden">
+          <SnapCarousel items={STACK_LAYERS.map(layer => (
+            <div key={layer.layer} className="h-full p-px bg-gradient-to-br from-amber-500/50 via-white/10 to-white/5" style={{ clipPath: CUT }}>
+              <div className="h-full min-h-[260px] bg-slate-950 bg-gradient-to-br from-white/[0.05] to-transparent p-7 pl-9 flex flex-col" style={{ clipPath: CUT }}>
+                <span className="font-display italic text-6xl text-amber-400/50 leading-none mb-5">{layer.layer}</span>
+                <h4 className="text-xl font-medium text-white mb-3">{layer.name}</h4>
+                <p className="text-white/60 font-light leading-relaxed text-[15px]">{layer.desc}</p>
+              </div>
+            </div>
+          ))} />
+        </div>
+        <div className="hidden max-w-6xl mx-auto md:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {STACK_LAYERS.map((layer, i) => (
             <motion.div
               key={layer.layer}

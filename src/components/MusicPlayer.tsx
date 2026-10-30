@@ -55,11 +55,11 @@ export default function MusicPlayer() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 1 }}
-      className="fixed bottom-6 right-6 z-50 pointer-events-auto"
+      className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-40 pointer-events-auto"
     >
       <button
         onClick={togglePlay}
-        className="flex items-center gap-3 px-4 py-2 bg-slate-950/80 backdrop-blur-md border border-white/10 rounded-full hover:bg-white/5 transition-colors group shadow-2xl"
+        className="flex items-center gap-3 p-3 md:px-4 md:py-2 bg-slate-950/80 backdrop-blur-md border border-white/10 rounded-full hover:bg-white/5 transition-colors group shadow-2xl"
         aria-label={isPlaying ? "Turn sound off" : "Turn sound on"}
       >
         {/* Equalizer bars */}
@@ -77,7 +77,7 @@ export default function MusicPlayer() {
             />
           ))}
         </div>
-        <span className="text-xs font-mono uppercase tracking-[0.2em] text-amber-500/70 group-hover:text-amber-400 transition-colors">
+        <span className="hidden md:inline text-xs font-mono uppercase tracking-[0.2em] text-amber-500/70 group-hover:text-amber-400 transition-colors">
           {isPlaying ? "Sound [ON]" : "Sound [OFF]"}
         </span>
       </button>

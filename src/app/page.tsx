@@ -1,7 +1,6 @@
 "use client";
 
 import ScrollyCanvas from "@/components/ScrollyCanvas";
-import Journey from "@/components/Journey";
 import BuildLab from "@/components/BuildLab";
 import Ventures from "@/components/Ventures";
 import HowIWork from "@/components/HowIWork";
@@ -55,8 +54,6 @@ export default function Home() {
         {/* 2. Ventures island */}
         <Ventures />
 
-        {/* Story / Timeline */}
-        <Journey />
 
         {/* 3. Build Lab / Codenamed builds map */}
         <BuildLab />

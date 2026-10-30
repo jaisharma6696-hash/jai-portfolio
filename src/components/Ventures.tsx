@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState, MouseEvent } from "react";
+import { useCallback, useEffect, useRef, useState, MouseEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { VenturesHandle } from "@/lib/venturesScene";
 import { SplitReveal } from "@/components/fx/Reveal";
-import { EASE, scrollToTarget } from "@/lib/motion";
+import { EASE } from "@/lib/motion";
+import DetailSheet from "@/components/fx/DetailSheet";
+import SnapCarousel from "@/components/fx/SnapCarousel";
+import { STORIES } from "@/components/Journey";
 
 const VENTURES = [
   {
@@ -49,6 +52,8 @@ export default function Ventures() {
   const [active, setActive] = useState(0);
   const [inView, setInView] = useState(false);
   const [paused, setPaused] = useState(false);
+  const [story, setStory] = useState<number | null>(null);
+  const onSwipe = useCallback((i: number) => { setActive(i); setPaused(true); clearTimeout(holdT.current); holdT.current = setTimeout(() => setPaused(false), 15000); }, []);
   const holdT = useRef<ReturnType<typeof setTimeout>>();
 
   const pick = (i: number) => {
@@ -93,7 +98,7 @@ export default function Ventures() {
   return (
     <section id="ventures" ref={secRef} className="relative overflow-hidden bg-[#0b1035] py-24 lg:py-28">
       <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_40%,rgba(59,76,190,.35),transparent_60%)] pointer-events-none" />
-      <div className="relative max-w-[1400px] mx-auto px-6 md:px-12 grid lg:grid-cols-12 gap-x-6 gap-y-8 items-center">
+      <div className="relative max-w-[1400px] mx-auto px-6 md:px-12 grid grid-cols-[minmax(0,1fr)] lg:grid-cols-12 gap-x-6 gap-y-8 items-center">
         {/* Heading */}
         <div className="lg:col-span-5 lg:col-start-1 lg:row-start-1 self-end">
           <p className="text-xs font-mono text-orange-400/90 uppercase tracking-[0.35em] mb-5">Ventures & Operations</p>
@@ -115,7 +120,27 @@ export default function Ventures() {
         </div>
 
         {/* List */}
-        <div className="lg:col-span-5 lg:col-start-1 lg:row-start-2 self-start">
+        {/* Phone: swipe the ventures, the island follows */}
+        <div className="lg:hidden -mt-6 relative z-10">
+          <SnapCarousel
+            active={active}
+            onActive={onSwipe}
+            items={VENTURES.map((v, i) => (
+              <button key={v.id} onClick={() => setStory(i)} className={`w-full h-full text-left rounded-3xl p-6 border transition-colors duration-500 ${active === i ? "border-orange-400/50 bg-white/[0.08]" : "border-white/10 bg-white/[0.04]"}`}>
+                <p className="font-mono text-xs text-orange-400 mb-3">{String(i + 1).padStart(2, "0")} · {v.when}</p>
+                <p className="text-2xl font-semibold text-white tracking-tight mb-1">{v.name}</p>
+                <p className="text-[11px] font-mono text-orange-300/80 uppercase tracking-[0.18em] mb-3">{v.role}</p>
+                <p className="text-white/65 font-light leading-relaxed text-[15px] mb-4 line-clamp-3">{v.line}</p>
+                <span className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-[0.2em] text-orange-400">Read the story →</span>
+              </button>
+            ))}
+          />
+          <div className="flex justify-center gap-1.5 mt-4">
+            {VENTURES.map((v, i) => <span key={v.id} className={`h-1.5 rounded-full transition-all duration-500 ${active === i ? "w-6 bg-orange-500" : "w-1.5 bg-white/25"}`} />)}
+          </div>
+        </div>
+
+        <div className="hidden lg:block lg:col-span-5 lg:col-start-1 lg:row-start-2 self-start">
 
           <ol className="border-t border-white/10">
             {VENTURES.map((v, i) => {
@@ -150,8 +175,8 @@ export default function Ventures() {
                               <li key={s} className="px-3 py-1.5 rounded-full bg-white/[0.06] border border-white/10 text-xs text-white/80">{s}</li>
                             ))}
                           </ul>
-                          <button onClick={() => scrollToTarget(`story-${v.id}`)} className="text-xs font-mono uppercase tracking-[0.2em] text-orange-400 hover:text-orange-300 transition-colors">
-                            Read the story ↓
+                          <button onClick={() => setStory(i)} className="group inline-flex items-center gap-2 text-xs font-mono uppercase tracking-[0.2em] text-orange-400 hover:text-orange-300 transition-colors">
+                            Read the full story <span className="transition-transform group-hover:translate-x-1">→</span>
                           </button>
                         </div>
                         {/* progress underline */}
@@ -173,6 +198,27 @@ export default function Ventures() {
           </ol>
         </div>
       </div>
+
+      <DetailSheet open={story !== null} onClose={() => setStory(null)} label={story !== null ? VENTURES[story].name : ""}>
+        {story !== null && (() => {
+          const v = VENTURES[story], st = STORIES.find(x => x.id === v.id);
+          return (
+            <div>
+              <p className="text-[11px] font-mono text-orange-400 uppercase tracking-[0.25em] mb-3 pr-10">{String(story + 1).padStart(2, "0")} · {v.when}</p>
+              <h3 className="text-4xl md:text-5xl font-semibold text-white tracking-tight leading-none mb-3">{v.name}</h3>
+              <p className="text-sm font-mono text-white/50 uppercase tracking-[0.18em] mb-6">{v.role}</p>
+              <div className="flex flex-wrap gap-2 mb-8">
+                {v.stats.map(x => <span key={x} className="px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-400/20 text-xs text-orange-100">{x}</span>)}
+              </div>
+              <div className="space-y-5">
+                {(st?.content ?? [v.line]).map((para, k) => (
+                  <p key={k} className={k === 0 ? "text-xl text-white/90 font-light leading-relaxed" : "text-white/65 font-light leading-relaxed"}>{para}</p>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
+      </DetailSheet>
     </section>
   );
 }

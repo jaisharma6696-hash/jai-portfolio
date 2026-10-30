@@ -57,17 +57,10 @@ export default function Navigation() {
         <div
           className={`pointer-events-auto liquid-glass rounded-full flex items-center gap-1 p-1.5 transition-shadow duration-500 ${raised ? "shadow-lg shadow-black/40" : ""}`}
         >
-          {/* JVS badge */}
-          <button
-            onClick={() => scrollToTarget(0)}
-            aria-label="Back to top"
-            className="group relative w-9 h-9 rounded-full p-[1.5px] ring-gradient shrink-0"
-          >
-            <span className="flex w-full h-full items-center justify-center rounded-full bg-slate-950 font-display italic text-[13px] text-white group-hover:scale-110 transition-transform duration-300">
-              jvs
-            </span>
+          <button onClick={() => scrollToTarget(0)} aria-label="Back to top" className="hidden lg:block pl-4 pr-2 font-display italic text-lg text-white whitespace-nowrap hover:text-amber-200 transition-colors">
+            Jai Vardhan Sharma
           </button>
-          <span className="lg:hidden pl-2 pr-3 text-sm font-light text-white/80 tracking-tight">Jai Vardhan Sharma</span>
+          <button onClick={() => scrollToTarget(0)} className="lg:hidden pl-4 pr-3 font-display italic text-lg text-white whitespace-nowrap">Jai Vardhan Sharma</button>
 
           <div className="hidden lg:block w-px h-5 bg-white/10 mx-1" />
 
@@ -110,49 +103,42 @@ export default function Navigation() {
         </div>
       </motion.header>
 
-      {/* Mobile dropdown menu */}
+      {/* Mobile full-screen menu */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
             key="mobile-menu"
-            initial={{ opacity: 0, y: -12, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.98 }}
-            transition={{ duration: 0.3, ease: EASE }}
-            className="fixed top-[76px] left-4 right-4 z-40 lg:hidden liquid-glass bg-slate-950/80 rounded-3xl"
+            initial={{ clipPath: "circle(0% at 92% 6%)" }}
+            animate={{ clipPath: "circle(150% at 92% 6%)" }}
+            exit={{ clipPath: "circle(0% at 92% 6%)" }}
+            transition={{ duration: 0.7, ease: EASE }}
+            className="fixed inset-0 z-[45] lg:hidden bg-[#0b1035] flex flex-col justify-between px-8 pt-28 pb-[max(2.5rem,env(safe-area-inset-bottom))]"
           >
-            <nav className="flex flex-col px-7 py-6 gap-5">
+            <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_at_80%_10%,rgba(242,107,29,.25),transparent_55%)] pointer-events-none" />
+            <nav className="relative flex flex-col gap-2">
               {NAV_ITEMS.map((item, i) => (
                 <motion.button
                   key={item.id}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.05, duration: 0.3, ease: EASE }}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15 + i * 0.06, duration: 0.6, ease: EASE }}
                   onClick={() => go(item.id)}
-                  className={`text-left text-3xl font-display italic transition-colors ${active === item.id ? "text-amber-400" : "text-white/80 hover:text-white"}`}
+                  className="flex items-baseline gap-4 text-left py-1"
                 >
-                  {item.label}
+                  <span className="font-mono text-xs text-orange-400/80">{String(i + 1).padStart(2, "0")}</span>
+                  <span className={`font-display italic text-5xl leading-tight ${active === item.id ? "text-orange-400" : "text-white"}`}>{item.label}</span>
                 </motion.button>
               ))}
-              <div className="border-t border-white/10 pt-4 mt-1 flex flex-col gap-3">
-                <a
-                  href="https://www.linkedin.com/in/jai-vardhan-sharma/"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-white/40 hover:text-white/70 text-xs font-mono uppercase tracking-[0.2em] transition-colors"
-                  onClick={() => setMobileOpen(false)}
-                >
-                  LinkedIn →
-                </a>
-                <a
-                  href="mailto:hello@jaivardhansharma.com"
-                  className="text-white/40 hover:text-white/70 text-xs font-mono uppercase tracking-[0.2em] transition-colors"
-                  onClick={() => setMobileOpen(false)}
-                >
-                  hello@jaivardhansharma.com
-                </a>
-              </div>
             </nav>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
+              className="relative flex flex-col gap-3"
+            >
+              <a href="https://www.linkedin.com/in/jai-vardhan-sharma/" target="_blank" rel="noreferrer" onClick={() => setMobileOpen(false)}
+                className="w-full text-center rounded-full bg-white text-black py-4 text-xs font-mono uppercase tracking-[0.2em]">Connect on LinkedIn →</a>
+              <a href="mailto:hello@jaivardhansharma.com" onClick={() => setMobileOpen(false)}
+                className="w-full text-center rounded-full liquid-glass py-4 text-xs font-mono uppercase tracking-[0.2em] text-white/80">hello@jaivardhansharma.com</a>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState, MouseEvent } from "react";
+import { useCallback, useEffect, useRef, useState, MouseEvent } from "react";
 import { motion } from "framer-motion";
+import DetailSheet from "@/components/fx/DetailSheet";
+import SnapCarousel from "@/components/fx/SnapCarousel";
 import type { BuildLabHandle } from "@/lib/buildLabScene";
 import { SplitReveal } from "@/components/fx/Reveal";
 import { EASE } from "@/lib/motion";
@@ -111,6 +113,53 @@ const MORE = [
   { t: "Whiteboard video engine", d: "Turns a script into an animated whiteboard explainer." },
 ];
 
+type Build = typeof BUILDS[number];
+
+function Teaser({ b, on, onOpen }: { b: Build; on: boolean; onOpen: () => void }) {
+  return (
+    <button
+      onClick={onOpen}
+      className={`group w-full text-left rounded-3xl p-6 md:p-7 transition-all duration-500 border ${on ? "border-orange-400/40 bg-white/[0.07] shadow-[0_20px_60px_rgba(0,0,0,.35)]" : "border-white/10 bg-white/[0.03] hover:bg-white/[0.05]"}`}
+    >
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <p className="text-[11px] font-mono text-orange-400 uppercase tracking-[0.22em]">Project {b.code} · {b.kind}</p>
+        <span className="shrink-0 inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-400/10 text-[9px] font-mono uppercase tracking-wider text-emerald-300">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />{b.status}
+        </span>
+      </div>
+      <h3 className="text-4xl md:text-5xl font-display italic text-white leading-none mb-3">{b.name}.</h3>
+      <p className="text-white/65 font-light leading-relaxed mb-5 line-clamp-2">{b.problem}</p>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-1.5">
+          {b.facts.slice(0, 2).map(f => <span key={f} className="px-2.5 py-1 rounded-full bg-white/[0.06] text-[11px] text-white/70">{f}</span>)}
+        </div>
+        <span className="shrink-0 w-10 h-10 rounded-full bg-orange-500 text-white flex items-center justify-center text-lg transition-transform duration-300 group-hover:rotate-45">↗</span>
+      </div>
+    </button>
+  );
+}
+
+function Detail({ b }: { b: Build }) {
+  return (
+    <div>
+      <p className="text-[11px] font-mono text-orange-400 uppercase tracking-[0.25em] mb-3 pr-10">Project {b.code} — {b.kind} · {b.status}</p>
+      <h3 className="text-5xl md:text-6xl font-display italic text-white leading-none mb-5">{b.name}.</h3>
+      <p className="text-xl text-white/85 font-light leading-relaxed mb-8">{b.problem}</p>
+      <p className="text-[11px] font-mono text-white/40 uppercase tracking-[0.25em] mb-3">What it does</p>
+      <ul className="space-y-3 mb-8">
+        {b.does.map(d => <li key={d} className="flex gap-3 text-white/70 font-light leading-relaxed"><span className="text-orange-400 mt-[3px] text-xs">✦</span>{d}</li>)}
+      </ul>
+      <div className="rounded-2xl border border-orange-400/20 bg-orange-500/[0.06] p-5 mb-8">
+        <p className="text-[11px] font-mono text-orange-300 uppercase tracking-[0.25em] mb-2">The AI inside</p>
+        <p className="text-white/80 font-light leading-relaxed">{b.ai}</p>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        {b.facts.map(f => <div key={f} className="rounded-2xl bg-white/[0.04] border border-white/10 px-4 py-3 text-sm text-white/80">{f}</div>)}
+      </div>
+    </div>
+  );
+}
+
 export default function BuildLab() {
   const secRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -118,15 +167,19 @@ export default function BuildLab() {
   const cardRefs = useRef<(HTMLElement | null)[]>([]);
   const sceneRef = useRef<BuildLabHandle | null>(null);
   const [step, setStep] = useState(0);
+  const [open, setOpen] = useState<number | null>(null);
+
+  const focus = useCallback((k: number) => { sceneRef.current?.setProgress(k); setStep(prev => (prev === k ? prev : k)); }, []);
 
   useEffect(() => {
     const cv = canvasRef.current, lb = labelsRef.current, sec = secRef.current;
     if (!cv || !lb || !sec) return;
     let disposed = false, io: IntersectionObserver | null = null;
 
-    // the card whose centre is nearest the reading line drives the map (0 = overview)
+    // desktop: the card nearest the reading line drives the map (0 = overview)
     const onScroll = () => {
-      const vh = window.innerHeight, line = vh * (window.innerWidth >= 1024 ? 0.5 : 0.68);
+      if (window.innerWidth < 1024) return;
+      const vh = window.innerHeight, line = vh * 0.5;
       let k = 0, best = Infinity;
       cardRefs.current.forEach((c, i) => {
         if (!c) return;
@@ -135,16 +188,18 @@ export default function BuildLab() {
       });
       const last = cardRefs.current[N - 1]?.getBoundingClientRect();
       if (last && last.bottom < vh * 0.3) k = N + 1;
-      sceneRef.current?.setProgress(k);
-      setStep(prev => (prev === k ? prev : k));
+      focus(k);
     };
 
     import("@/lib/buildLabScene").then(({ mountBuildLab }) => {
       if (disposed) return;
-      const s = mountBuildLab(cv, lb, BUILDS.map(b => `${b.code} · ${b.name}`));
+      const s = mountBuildLab(cv, lb, BUILDS.map(b => `${b.code} · ${b.name}`), i => setOpen(i));
       if (!s) return;
       sceneRef.current = s;
-      io = new IntersectionObserver(([e]) => s.setActive(e.isIntersecting), { rootMargin: "120px" });
+      io = new IntersectionObserver(([e]) => {
+        s.setActive(e.isIntersecting);
+        if (e.isIntersecting && window.innerWidth < 1024) setStep(p => { const k = p || 1; s.setProgress(k); return k; });
+      }, { rootMargin: "120px" });
       io.observe(sec);
       onScroll();
     });
@@ -160,106 +215,90 @@ export default function BuildLab() {
       sceneRef.current?.dispose();
       sceneRef.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const onMove = (e: MouseEvent<HTMLDivElement>) => {
     const r = e.currentTarget.getBoundingClientRect();
     sceneRef.current?.setPointer(((e.clientX - r.left) / r.width) * 2 - 1, ((e.clientY - r.top) / r.height) * 2 - 1);
   };
+  const onSwipe = useCallback((i: number) => focus(i + 1), [focus]);
 
   return (
-    <section id="builds" ref={secRef} className="relative bg-slate-950 pt-28">
-      <div className="max-w-[1400px] mx-auto px-6 md:px-12">
-        <div className="max-w-3xl mb-10 lg:mb-0">
-          <p className="text-xs font-mono text-amber-500/80 uppercase tracking-[0.35em] mb-5">Build Lab · AI Products</p>
+    <section id="builds" ref={secRef} className="relative bg-[#0b1035] pt-24 lg:pt-28 overflow-x-clip">
+      <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_at_75%_20%,rgba(59,76,190,.35),transparent_55%)] pointer-events-none" />
+      <div className="relative max-w-[1400px] mx-auto px-6 md:px-12">
+        <div className="max-w-3xl mb-6 lg:mb-0">
+          <p className="text-xs font-mono text-orange-400 uppercase tracking-[0.35em] mb-5">Build Lab · AI Products</p>
           <SplitReveal
-            parts={["Things I've built\n", { text: "with AI.", className: "font-display italic text-amber-400/90" }]}
-            className="text-5xl md:text-7xl font-light text-white tracking-tight leading-[1.02] mb-6"
+            parts={["Things I've built\n", { text: "with AI.", className: "font-display italic text-orange-400" }]}
+            className="text-5xl md:text-7xl font-semibold text-white tracking-tight leading-[0.98] mb-5"
           />
-          <p className="text-lg text-white/55 font-light leading-relaxed max-w-xl">
-            Eight products across operations, events, infrastructure and commerce — designed, specified and shipped with AI as my build team.
-            Codenamed: clients and names withheld.
+          <p className="text-base md:text-lg text-white/60 font-light leading-relaxed max-w-xl">
+            Eight products, designed, specified and shipped with AI as my build team. Tap any building to explore. Codenamed — clients withheld.
           </p>
         </div>
 
         <div className="relative lg:grid lg:grid-cols-12 lg:gap-10">
-          {/* Map — sticky beside the cards on desktop, pinned above them on mobile */}
-          <div className="sticky top-0 z-20 lg:z-auto lg:order-2 lg:col-span-7 h-[40vh] lg:h-screen overflow-hidden lg:[mask-image:linear-gradient(to_right,transparent,black_14%)] -mx-6 md:-mx-12 lg:mx-0 bg-slate-950 lg:bg-transparent border-b border-white/5 lg:border-0" onMouseMove={onMove} onMouseLeave={() => sceneRef.current?.setPointer(0, 0)}>
-            <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" aria-label="Isometric map of the eight AI products" />
+          {/* Map */}
+          <div
+            className="relative lg:sticky lg:top-0 lg:order-2 lg:col-span-7 h-[92vw] max-h-[62svh] lg:max-h-none lg:h-screen -mx-6 md:-mx-12 lg:mx-0 overflow-hidden lg:[mask-image:linear-gradient(to_right,transparent,black_12%)]"
+            onMouseMove={onMove} onMouseLeave={() => sceneRef.current?.setPointer(0, 0)}
+          >
+            <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" aria-label="Isometric island of the eight AI products" />
             <div ref={labelsRef} className="absolute inset-0 pointer-events-none" />
-            <div className="absolute left-4 right-4 bottom-3 flex gap-1.5 lg:hidden">
-              {BUILDS.map((b, i) => <span key={b.code} className={`h-1 flex-1 rounded-full transition-colors duration-500 ${step === i + 1 ? "bg-amber-500" : step > i + 1 ? "bg-white/40" : "bg-white/10"}`} />)}
-            </div>
           </div>
 
-          {/* Product cards */}
-          <div className="relative z-10 lg:order-1 lg:col-span-5 pb-[30vh] lg:pb-[40vh] lg:pt-[30vh]">
-            {BUILDS.map((b, i) => {
-              const on = step === i + 1;
-              return (
-                <motion.article
-                  key={b.code}
-                  ref={el => { cardRefs.current[i] = el; }}
-                  initial={{ opacity: 0, y: 40 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-60px" }}
-                  transition={{ duration: 0.8, ease: EASE }}
-                  className={`mt-10 lg:mt-0 lg:mb-[28vh] rounded-3xl p-6 md:p-8 transition-all duration-500 ${on ? "liquid-glass bg-white/[0.04] border-amber-500/30" : "border border-white/[0.06] bg-white/[0.015] opacity-70"}`}
-                >
-                  <div className="flex items-center justify-between gap-3 mb-5">
-                    <p className="text-[11px] font-mono text-amber-500/80 uppercase tracking-[0.25em]">Project {b.code} — {b.kind}</p>
-                    <span className="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-emerald-400/20 bg-emerald-400/[0.06] text-[10px] font-mono uppercase tracking-wider text-emerald-300/90">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />{b.status}
-                    </span>
-                  </div>
-                  <h3 className="text-5xl md:text-6xl font-display italic text-white leading-none mb-5">{b.name}.</h3>
-                  <p className="text-lg text-white/80 font-light leading-relaxed mb-6">{b.problem}</p>
+          {/* Desktop teaser cards */}
+          <div className="hidden lg:block relative z-10 lg:order-1 lg:col-span-5 pt-[30vh] pb-[40vh]">
+            {BUILDS.map((b, i) => (
+              <div key={b.code} ref={el => { cardRefs.current[i] = el; }} className="mb-[26vh]">
+                <Teaser b={b} on={step === i + 1} onOpen={() => setOpen(i)} />
+              </div>
+            ))}
+          </div>
+        </div>
 
-                  <p className="text-[11px] font-mono text-white/35 uppercase tracking-[0.25em] mb-3">What it does</p>
-                  <ul className="space-y-2.5 mb-6">
-                    {b.does.map(d => (
-                      <li key={d} className="flex gap-3 text-white/65 font-light leading-relaxed">
-                        <span className="text-amber-500/70 mt-[3px] text-xs">✦</span>{d}
-                      </li>
-                    ))}
-                  </ul>
-
-                  <div className="rounded-2xl border border-amber-500/15 bg-amber-500/[0.04] p-4 mb-6">
-                    <p className="text-[11px] font-mono text-amber-400/80 uppercase tracking-[0.25em] mb-1.5">The AI inside</p>
-                    <p className="text-white/75 font-light leading-relaxed">{b.ai}</p>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    {b.facts.map(f => (
-                      <span key={f} className="px-3 py-1.5 border border-white/10 bg-slate-950/60 text-white/70 text-xs tracking-wide rounded-full">{f}</span>
-                    ))}
-                  </div>
-                </motion.article>
-              );
-            })}
+        {/* Phone: swipe through products, the map follows */}
+        <div className="lg:hidden -mt-4 relative z-10">
+          <SnapCarousel
+            active={Math.max(0, step - 1)}
+            onActive={onSwipe}
+            items={BUILDS.map((b, i) => <Teaser key={b.code} b={b} on={step === i + 1} onOpen={() => setOpen(i)} />)}
+          />
+          <div className="flex justify-center gap-1.5 mt-4">
+            {BUILDS.map((b, i) => <span key={b.code} className={`h-1.5 rounded-full transition-all duration-500 ${step === i + 1 ? "w-6 bg-orange-500" : "w-1.5 bg-white/25"}`} />)}
           </div>
         </div>
 
         {/* More from the lab */}
-        <div className="pb-28">
-          <p className="text-[11px] font-mono text-white/35 uppercase tracking-[0.3em] mb-6">More from the lab</p>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="pt-20 lg:pt-0 pb-24">
+          <p className="text-[11px] font-mono text-white/40 uppercase tracking-[0.3em] mb-6">More from the lab</p>
+          <div className="lg:hidden">
+            <SnapCarousel items={MORE.map(m => <MoreCard key={m.t} m={m} />)} />
+          </div>
+          <div className="hidden lg:grid grid-cols-4 gap-4">
             {MORE.map((m, i) => (
-              <motion.div
-                key={m.t}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-40px" }}
-                transition={{ delay: (i % 4) * 0.07, duration: 0.7, ease: EASE }}
-                className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-5 hover:border-amber-500/25 hover:bg-white/[0.04] transition-colors"
-              >
-                <p className="text-white/90 font-medium mb-1.5">{m.t}</p>
-                <p className="text-sm text-white/50 font-light leading-relaxed">{m.d}</p>
+              <motion.div key={m.t} initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-40px" }} transition={{ delay: (i % 4) * 0.07, duration: 0.7, ease: EASE }}>
+                <MoreCard m={m} />
               </motion.div>
             ))}
           </div>
         </div>
       </div>
+
+      <DetailSheet open={open !== null} onClose={() => setOpen(null)} label={open !== null ? BUILDS[open].name : ""}>
+        {open !== null && <Detail b={BUILDS[open]} />}
+      </DetailSheet>
     </section>
+  );
+}
+
+function MoreCard({ m }: { m: { t: string; d: string } }) {
+  return (
+    <div className="h-full rounded-2xl border border-white/10 bg-white/[0.03] p-5 hover:border-orange-400/30 hover:bg-white/[0.05] transition-colors">
+      <p className="text-white font-medium mb-1.5">{m.t}</p>
+      <p className="text-sm text-white/55 font-light leading-relaxed">{m.d}</p>
+    </div>
   );
 }

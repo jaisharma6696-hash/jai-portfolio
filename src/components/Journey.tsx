@@ -5,7 +5,7 @@ import { AnimatePresence, motion, useScroll, useSpring } from "framer-motion";
 import { SplitReveal } from "@/components/fx/Reveal";
 import { EASE } from "@/lib/motion";
 
-const STORIES = [
+export const STORIES = [
   {
     id: "beantree",
     title: "Beantree Foods",

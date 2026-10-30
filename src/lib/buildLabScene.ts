@@ -4,10 +4,19 @@ import * as THREE from "three";
 // p = 0 overview, 1..N focuses build N, N+1 overview again.
 
 const AMBER = 0xf59e0b;
-const SLATE = 0x1e293b;
-const SLATE_HI = 0x334155;
-const SLATE_TOP = 0x475569;
-const PAPER = 0xe2e8f0;
+const PAPER = 0xf7f5ef;
+// per-build palette: walls, roof/accent, base trim — set before each builder runs
+const PALETTES: [number, number, number][] = [
+  [0x7c4dff, 0xffffff, 0x5e35b1], // Halo — violet tower
+  [0xf7f5ef, 0x29b6f6, 0x0277bd], // Beacon — white hall, blue dome
+  [0xf8bbd0, 0xec407a, 0xffffff], // Vows — pink pavilion
+  [0xeceff1, 0x90a4ae, 0x546e7a], // Railgrid — concrete viaduct
+  [0x26c6da, 0x00838f, 0xe0f7fa], // Blueprint — teal
+  [0xe53935, 0xffffff, 0x37474f], // Compass — red & white lighthouse
+  [0x8d6e63, 0xffcc80, 0x6d4c41], // Brew — café
+  [0xffca28, 0xf57c00, 0x455a64], // Forge — yellow factory
+];
+let SLATE_HI = PALETTES[0][0], SLATE_TOP = PALETTES[0][1], SLATE = PALETTES[0][2];
 
 const PADS: [number, number][] = [
   [-15, 2.5], [-10.5, -2.5], [-6, 2], [-1.5, -3], [3, 1.5], [7.5, -2.5], [12, 2], [16, -1.5],
@@ -242,7 +251,7 @@ export type BuildLabHandle = {
   dispose: () => void;
 };
 
-export function mountBuildLab(canvas: HTMLCanvasElement, labels: HTMLElement, codes: string[]): BuildLabHandle | null {
+export function mountBuildLab(canvas: HTMLCanvasElement, labels: HTMLElement, codes: string[], onPick?: (i: number) => void): BuildLabHandle | null {
   let R: THREE.WebGLRenderer;
   try { R = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true }); } catch { return null; }
   const reduce = !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
@@ -250,23 +259,32 @@ export function mountBuildLab(canvas: HTMLCanvasElement, labels: HTMLElement, co
   R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFSoftShadowMap;
 
   const S = new THREE.Scene();
-  S.fog = new THREE.Fog(0x020617, 70, 110);
   const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 1, 200);
   const DIR = new THREE.Vector3(1, 1.15, 1.25).normalize(), D = 70;
-  S.add(new THREE.HemisphereLight(0xcbd5e1, 0x0f172a, 1.4));
-  const sun = new THREE.DirectionalLight(0xfff1dc, 2.2); sun.position.set(-14, 30, 18); sun.castShadow = true;
+  S.add(new THREE.HemisphereLight(0xffffff, 0x6d8a5a, 2.0));
+  const sun = new THREE.DirectionalLight(0xfff3e0, 2.5); sun.position.set(-14, 30, 18); sun.castShadow = true;
   sun.shadow.mapSize.set(1024, 1024);
   Object.assign(sun.shadow.camera, { left: -26, right: 26, top: 26, bottom: -26, near: 1, far: 80 });
   sun.shadow.bias = -0.0005; S.add(sun);
   const rim = new THREE.DirectionalLight(AMBER, 0.6); rim.position.set(20, 8, -14); S.add(rim);
 
-  // island + dot grid
-  const island = new THREE.Mesh(new THREE.CylinderGeometry(24, 25, 1.2, 64), mat(0x0f172a));
-  island.scale.z = 0.42; island.position.y = -0.6; island.receiveShadow = true; S.add(island);
-  const dots: number[] = [];
-  for (let x = -22; x <= 22; x += 1.5) for (let z = -9; z <= 9; z += 1.5) if ((x * x) / 576 + (z * z) / 100 < 0.92) dots.push(x, 0.02, z);
-  const dg = new THREE.BufferGeometry(); dg.setAttribute("position", new THREE.Float32BufferAttribute(dots, 3));
-  S.add(new THREE.Points(dg, new THREE.PointsMaterial({ color: 0x475569, size: 0.09, transparent: true, opacity: 0.7 })));
+  // island: water rim, earth body, grass top, trees
+  const water = new THREE.Mesh(new THREE.CylinderGeometry(27.5, 27.5, 0.4, 72), mat(0x4fc3f7));
+  water.scale.z = 0.5; water.position.y = -1.1; water.receiveShadow = true; S.add(water);
+  const earth = new THREE.Mesh(new THREE.CylinderGeometry(24.4, 23.6, 2.4, 72), mat(0x8d5a3b));
+  earth.scale.z = 0.44; earth.position.y = -1.3; S.add(earth);
+  const island = new THREE.Mesh(new THREE.CylinderGeometry(24.5, 24.5, 0.5, 72), mat(0x9ccc65));
+  island.scale.z = 0.44; island.position.y = -0.25; island.receiveShadow = true; S.add(island);
+  let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let n = 0, tries = 0; n < 46 && tries < 800; tries++) {
+    const x = -22 + rnd() * 44, z = -9.5 + rnd() * 19;
+    if ((x * x) / 529 + (z * z) / 100 > 0.9) continue;
+    if (PADS.some(([px, pz]) => Math.hypot(x - px, z - pz) < 3.6)) continue;
+    const tr = new THREE.Group(), k = 0.6 + rnd() * 0.6;
+    tr.add(new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.14, 0.6, 5), mat(0x6d4c41)));
+    const crown = new THREE.Mesh(new THREE.ConeGeometry(0.6, 1.5, 6), mat(rnd() > 0.5 ? 0x43a047 : 0x2e7d32)); crown.position.y = 1.1; crown.castShadow = true; tr.add(crown);
+    tr.position.set(x, 0.3, z); tr.scale.setScalar(k); S.add(tr); n++;
+  }
 
   // trail connecting pads in build order
   const curve = new THREE.CatmullRomCurve3(PADS.map(([x, z]) => new THREE.Vector3(x, 0.08, z)), false, "catmullrom", 0.4);
@@ -274,18 +292,22 @@ export function mountBuildLab(canvas: HTMLCanvasElement, labels: HTMLElement, co
   const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, TSEG, 0.09, 6), glow(AMBER, 0.85));
   const tubeIdx = tube.geometry.index ? tube.geometry.index.count : 0;
   S.add(tube);
-  const ghost = new THREE.Mesh(new THREE.TubeGeometry(curve, TSEG, 0.05, 4), glow(0x334155, 0.6)); S.add(ghost);
+  const ghost = new THREE.Mesh(new THREE.TubeGeometry(curve, TSEG, 0.42, 4), mat(0x56606e)); ghost.scale.y = 0.4; S.add(ghost);
   const beads = [0, 1, 2].map(() => { const b = ball(0.18, glow(0xfde68a)); S.add(b); return b; });
 
   // pads + builds
   const items = PADS.map(([x, z], i) => {
     const base = new THREE.Group(); base.position.set(x, 0, z); S.add(base);
-    const pad = new THREE.Mesh(new THREE.CylinderGeometry(2.3, 2.3, 0.12, 40), mat(SLATE)); pad.position.y = 0.06; pad.receiveShadow = true; base.add(pad);
+    const pad = new THREE.Mesh(new THREE.CylinderGeometry(2.3, 2.3, 0.12, 40), mat(0xeceae4)); pad.position.y = 0.06; pad.receiveShadow = true; base.add(pad);
     const ring = new THREE.Mesh(new THREE.RingGeometry(2.35, 2.55, 48), glow(AMBER, 0)); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.14; base.add(ring);
+    [SLATE_HI, SLATE_TOP, SLATE] = PALETTES[i];
     const b = BUILDERS[i](); b.root.position.y = 0.12; b.root.scale.set(1, 0.001, 1); base.add(b.root);
-    const tag = document.createElement("div");
-    tag.textContent = codes[i] ?? "";
-    tag.style.cssText = "position:absolute;left:0;top:0;font:500 11px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.2em;color:#f8fafc;padding:5px 8px;border:1px solid rgba(255,255,255,.15);background:rgba(2,6,23,.7);border-radius:999px;white-space:nowrap;pointer-events:none;opacity:0;transition:border-color .3s,color .3s;";
+    const tag = document.createElement("button");
+    tag.type = "button";
+    const [c0, ...rest] = (codes[i] ?? "").split(" · ");
+    tag.innerHTML = `<span style="color:#f26b1d">${c0}</span>&nbsp;&nbsp;${rest.join(" · ")}`;
+    tag.addEventListener("click", () => onPick?.(i));
+    tag.style.cssText = "position:absolute;left:0;top:0;font:500 11px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;color:#f8fafc;padding:7px 11px;border:1px solid rgba(255,255,255,.18);background:rgba(10,15,40,.82);backdrop-filter:blur(6px);border-radius:999px;white-space:nowrap;pointer-events:auto;cursor:pointer;opacity:0;transition:background .3s,border-color .3s;";
     labels.appendChild(tag);
     return { base, ring, b, tag, on: 0, top: new THREE.Vector3(x, 0, z) };
   });
@@ -329,7 +351,7 @@ export function mountBuildLab(canvas: HTMLCanvasElement, labels: HTMLElement, co
     dir.y += pitch; dir.normalize();
     cam.position.copy(center).addScaledVector(dir, D); cam.lookAt(center); cam.updateMatrixWorld();
     const aspect = W / Math.max(1, H), narrow = W < 760;
-    const overviewHalfW = narrow ? 21 : 25, focusHalfH = narrow ? 6.6 : 7.6;
+    const overviewHalfW = narrow ? 21 : 25, focusHalfH = narrow ? 9.5 : 11.5;
     const halfH = (overviewHalfW / aspect) * (1 - w) + focusHalfH * w;
     const halfW = halfH * aspect, sx = halfW * shift * (0.75 + 0.25 * w);
     cam.left = -halfW - sx; cam.right = halfW - sx; cam.top = halfH; cam.bottom = -halfH;
@@ -357,7 +379,9 @@ export function mountBuildLab(canvas: HTMLCanvasElement, labels: HTMLElement, co
       const x = (it.top.x * 0.5 + 0.5) * W, y = (-it.top.y * 0.5 + 0.5) * H + 18;
       it.tag.style.transform = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0) translateX(-50%)`;
       it.tag.style.opacity = (rise * (0.45 + 0.55 * it.on)).toFixed(3);
-      it.tag.style.borderColor = it.on > 0.5 ? "rgba(245,158,11,.7)" : "rgba(255,255,255,.15)";
+      it.tag.style.background = it.on > 0.5 ? "rgba(242,107,29,.95)" : "rgba(10,15,40,.82)";
+      it.tag.style.borderColor = it.on > 0.5 ? "rgba(255,255,255,.5)" : "rgba(255,255,255,.18)";
+      const num = it.tag.firstElementChild as HTMLElement | null; if (num) num.style.color = it.on > 0.5 ? "#fff" : "#f26b1d";
     });
 
     R.render(S, cam);
