@@ -79,3 +79,8 @@ html.lenis, html.lenis body { height: auto; }
 @media (prefers-reduced-motion: reduce) {
   .grain, .scroll-cue-line, .marquee-track, .ring-gradient { animation: none !important; }
 }
+
+/* Impact bars — lane dashes drift like traffic */
+@keyframes road-dash { to { background-position: -34px 0; } }
+.road-dash { animation: road-dash 0.9s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .road-dash { animation: none; } }

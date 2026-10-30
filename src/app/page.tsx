@@ -4,6 +4,7 @@ import ScrollyCanvas from "@/components/ScrollyCanvas";
 import BuildLab from "@/components/BuildLab";
 import Ventures from "@/components/Ventures";
 import HowIWork from "@/components/HowIWork";
+import Impact from "@/components/Impact";
 import Projects from "@/components/Projects";
 import PsychologicalStack from "@/components/PsychologicalStack";
 import ExperienceSnapshot from "@/components/ExperienceSnapshot";
@@ -72,6 +73,9 @@ export default function Home() {
 
         {/* 6. Identity Stats & Domains */}
         <ExperienceSnapshot />
+
+        {/* Then vs now, as roads and rails */}
+        <Impact />
 
         {/* 7. Education & Foundations */}
         <Education />

@@ -1,12 +1,11 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { SplitReveal } from "@/components/fx/Reveal";
 import SnapCarousel from "@/components/fx/SnapCarousel";
+import type { StackHandle } from "@/lib/stackScene";
 import { EASE } from "@/lib/motion";
-
-// Chamfered corners: big cut top-left, small cut bottom-right.
-const CUT = "polygon(44px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 44px)";
 
 const STACK_LAYERS = [
   {
@@ -34,89 +33,127 @@ const STACK_LAYERS = [
     name: "Commercial Aggression",
     desc: "Bias for velocity. Strategy means nothing without execution."
   },
+  {
+    layer: "06",
+    name: "AI-Native Operator",
+    desc: "Directs AI agents like a team — writes the spec, demands the test results, and approves before anything ships."
+  },
 ];
 
+const CYCLE_MS = 5500;
+const ACCENTS = Array(6).fill("#f26b1d");
+
 export default function PsychologicalStack() {
+  const secRef = useRef<HTMLElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const sceneRef = useRef<StackHandle | null>(null);
+  const holdT = useRef<ReturnType<typeof setTimeout>>();
+  const [active, setActive] = useState(0);
+  const [inView, setInView] = useState(false);
+  const [paused, setPaused] = useState(false);
+
+  const pick = useCallback((i: number) => {
+    setActive(i); setPaused(true);
+    clearTimeout(holdT.current);
+    holdT.current = setTimeout(() => setPaused(false), 12000);
+  }, []);
+
+  useEffect(() => {
+    const cv = canvasRef.current, sec = secRef.current; if (!cv || !sec) return;
+    let disposed = false;
+    const io = new IntersectionObserver(([e]) => { setInView(e.isIntersecting); sceneRef.current?.setActive(e.isIntersecting); }, { rootMargin: "100px" });
+    import("@/lib/stackScene").then(({ mountStack }) => {
+      if (disposed) return;
+      const s = mountStack(cv); if (!s) return;
+      sceneRef.current = s; io.observe(sec);
+    });
+    const onResize = () => sceneRef.current?.resize();
+    window.addEventListener("resize", onResize);
+    return () => { disposed = true; io.disconnect(); window.removeEventListener("resize", onResize); sceneRef.current?.dispose(); sceneRef.current = null; clearTimeout(holdT.current); };
+  }, []);
+
+  useEffect(() => { sceneRef.current?.select(active); }, [active]);
+
+  // autoplay through the layers while the section is on screen
+  useEffect(() => {
+    if (!inView || paused) return;
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    const t = setTimeout(() => setActive(a => (a + 1) % STACK_LAYERS.length), CYCLE_MS);
+    return () => clearTimeout(t);
+  }, [active, inView, paused]);
+
   return (
-    <section id="stack" className="relative py-24 md:py-32 bg-slate-950 border-t border-white/5 z-10 overflow-hidden">
-      
-      {/* Background Graphic Element */}
-      <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/3 opacity-10 pointer-events-none">
-        <svg width="800" height="800" viewBox="0 0 800 800" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="400" cy="400" r="399" stroke="white" strokeWidth="2" strokeDasharray="10 10"/>
-          <circle cx="400" cy="400" r="299" stroke="white" strokeWidth="1" strokeDasharray="5 5"/>
-          <circle cx="400" cy="400" r="199" stroke="white" strokeWidth="0.5"/>
-        </svg>
-      </div>
+    <section id="stack" ref={secRef} className="relative py-24 md:py-32 bg-[#07090f] border-t border-white/5 z-10 overflow-x-clip">
+      <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_at_68%_55%,rgba(242,107,29,.10),transparent_55%)] pointer-events-none" />
+      <div className="relative max-w-[1400px] mx-auto px-6 md:px-12">
 
-      <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-24 relative z-10">
-        
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          className="mb-16 text-center"
-        >
-          <h3 className="text-xs font-mono text-amber-500/70 uppercase tracking-[0.3em] mb-4">
-            The Operator&apos;s Architecture
-          </h3>
+        <div className="mb-12 md:mb-16 md:text-center">
+          <h3 className="text-xs font-mono text-orange-400 uppercase tracking-[0.3em] mb-4">The Operator&apos;s Architecture</h3>
           <SplitReveal
-            parts={["Psychological", { text: "Stack.", className: "font-display italic text-amber-400/90" }]}
-            className="text-4xl md:text-6xl font-light text-white tracking-tight leading-tight mb-6"
+            parts={["Psychological", { text: "Stack.", className: "font-display italic text-orange-400" }]}
+            className="text-5xl md:text-7xl font-semibold text-white tracking-tight leading-tight mb-8"
           />
-        </motion.div>
-
-        {/* 1-Line Identity Hero */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          className="max-w-4xl mx-auto bg-gradient-to-br from-white/[0.05] to-transparent border border-white/10 p-7 md:p-12 rounded-3xl mb-14 md:mb-24 text-center backdrop-blur-xl shadow-2xl"
-        >
-          <p className="text-3xl md:text-5xl font-display italic leading-snug text-white/90">
+          <p className="max-w-3xl md:mx-auto text-2xl md:text-4xl font-display italic leading-snug text-white/85">
             &ldquo;A systems builder who treats ambiguity as raw material — and turns it into architecture.&rdquo;
           </p>
-        </motion.div>
+        </div>
 
-        {/* The Layers — staggered chamfered cards */}
-        <div className="md:hidden">
-          <SnapCarousel items={STACK_LAYERS.map(layer => (
-            <div key={layer.layer} className="h-full p-px bg-gradient-to-br from-amber-500/50 via-white/10 to-white/5" style={{ clipPath: CUT }}>
-              <div className="h-full min-h-[260px] bg-slate-950 bg-gradient-to-br from-white/[0.05] to-transparent p-7 pl-9 flex flex-col" style={{ clipPath: CUT }}>
-                <span className="font-display italic text-6xl text-amber-400/50 leading-none mb-5">{layer.layer}</span>
-                <h4 className="text-xl font-medium text-white mb-3">{layer.name}</h4>
-                <p className="text-white/60 font-light leading-relaxed text-[15px]">{layer.desc}</p>
-              </div>
+        <div className="grid grid-cols-[minmax(0,1fr)] lg:grid-cols-12 gap-x-6 items-center">
+          {/* Six layers, six little cities */}
+          <div className="relative lg:col-span-7 lg:col-start-6 lg:row-start-1 h-[105vw] max-h-[66svh] lg:max-h-none lg:h-[86vh] -mx-6 md:mx-0">
+            <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" aria-label="Six floating city tiles, one for each layer of the stack" />
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 hidden md:flex flex-col gap-2">
+              {STACK_LAYERS.map((l, i) => (
+                <button key={l.layer} onClick={() => pick(i)} aria-label={l.name}
+                  className="w-2.5 rounded-full transition-all duration-500" style={{ height: active === i ? 28 : 10, background: active === i ? ACCENTS[i] : "rgba(255,255,255,.25)" }} />
+              ))}
             </div>
-          ))} />
-        </div>
-        <div className="hidden max-w-6xl mx-auto md:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {STACK_LAYERS.map((layer, i) => (
-            <motion.div
-              key={layer.layer}
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-60px" }}
-              transition={{ delay: (i % 3) * 0.1, duration: 0.9, ease: EASE }}
-              className={`group ${i % 3 === 1 ? "lg:mt-20" : ""} ${i === 0 ? "md:col-span-2 lg:col-span-1" : ""}`}
-            >
-              <div className="p-px bg-gradient-to-br from-amber-500/40 via-white/10 to-white/5 group-hover:from-amber-400/80 transition-colors duration-500 h-full" style={{ clipPath: CUT }}>
-                <div className="relative h-full min-h-[230px] bg-slate-950 bg-gradient-to-br from-white/[0.04] to-transparent p-8 pl-10 flex flex-col" style={{ clipPath: CUT }}>
-                  <span className="font-display italic text-6xl text-amber-500/25 group-hover:text-amber-400/60 transition-colors duration-500 leading-none mb-6">
-                    {layer.layer}
-                  </span>
-                  <h4 className="text-lg md:text-xl font-medium tracking-wide text-white/90 group-hover:text-amber-50 transition-colors mb-3">
-                    {layer.name}
-                  </h4>
-                  <p className="text-white/50 font-light leading-relaxed text-[15px] group-hover:text-white/70 transition-colors">
-                    {layer.desc}
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+          </div>
 
+          {/* Desktop: autoplaying list */}
+          <ol className="hidden lg:block lg:col-span-5 lg:col-start-1 lg:row-start-1 border-t border-white/10">
+            {STACK_LAYERS.map((l, i) => {
+              const on = active === i;
+              return (
+                <li key={l.layer} className="border-b border-white/10">
+                  <button onClick={() => pick(i)} onMouseMove={() => { if (!on) pick(i); }} className="w-full flex items-baseline gap-5 py-4 text-left group">
+                    <span className="font-mono text-sm transition-colors" style={{ color: on ? ACCENTS[i] : "rgba(255,255,255,.4)" }}>{l.layer}</span>
+                    <span className={`text-xl xl:text-2xl font-medium tracking-tight transition-colors ${on ? "text-white" : "text-white/65 group-hover:text-white"}`}>{l.name}</span>
+                  </button>
+                  <AnimatePresence initial={false}>
+                    {on && (
+                      <motion.div key="d" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.5, ease: EASE }} className="overflow-hidden">
+                        <p className="pl-10 pb-5 text-white/65 font-light leading-relaxed max-w-md">{l.desc}</p>
+                        <div className="h-[2px] bg-white/5">
+                          <motion.div key={`${i}-${paused}`} className="h-full origin-left" style={{ background: ACCENTS[i] }}
+                            initial={{ scaleX: paused ? 1 : 0 }} animate={{ scaleX: 1 }} transition={{ duration: paused ? 0 : CYCLE_MS / 1000, ease: "linear" }} />
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </li>
+              );
+            })}
+          </ol>
+
+          {/* Phone: swipe the layers, the stack follows */}
+          <div className="lg:hidden -mt-4 relative z-10">
+            <SnapCarousel
+              active={active}
+              onActive={pick}
+              items={STACK_LAYERS.map((l, i) => (
+                <div key={l.layer} className="h-full rounded-3xl p-6 border bg-white/[0.05] transition-colors duration-500" style={{ borderColor: active === i ? ACCENTS[i] : "rgba(255,255,255,.1)" }}>
+                  <span className="font-display italic text-5xl leading-none" style={{ color: ACCENTS[i] }}>{l.layer}</span>
+                  <h4 className="text-xl font-semibold text-white mt-4 mb-2">{l.name}</h4>
+                  <p className="text-white/65 font-light leading-relaxed text-[15px]">{l.desc}</p>
+                </div>
+              ))}
+            />
+            <div className="flex justify-center gap-1.5 mt-4">
+              {STACK_LAYERS.map((l, i) => <span key={l.layer} className="h-1.5 rounded-full transition-all duration-500" style={{ width: active === i ? 24 : 6, background: active === i ? ACCENTS[i] : "rgba(255,255,255,.25)" }} />)}
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   );

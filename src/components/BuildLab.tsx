@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, MouseEvent } from "react";
 import { motion } from "framer-motion";
 import DetailSheet from "@/components/fx/DetailSheet";
 import SnapCarousel from "@/components/fx/SnapCarousel";
+import Tour, { TourScene } from "@/components/fx/Tour";
 import type { BuildLabHandle } from "@/lib/buildLabScene";
 import { SplitReveal } from "@/components/fx/Reveal";
 import { EASE } from "@/lib/motion";
@@ -115,6 +116,13 @@ const MORE = [
 
 type Build = typeof BUILDS[number];
 
+const TOUR_STEPS = BUILDS.map(b => ({ kicker: `Project ${b.code} · ${b.kind} · ${b.status}`, title: `${b.name}.`, body: b.problem }));
+async function mountLabTour(cv: HTMLCanvasElement, lb: HTMLElement): Promise<TourScene | null> {
+  const { mountBuildLab } = await import("@/lib/buildLabScene");
+  const s = mountBuildLab(cv, lb, BUILDS.map(b => `${b.code} · ${b.name}`));
+  return s && { go: i => s.setProgress(i + 1), setActive: s.setActive, resize: s.resize, dispose: s.dispose };
+}
+
 function Teaser({ b, on, onOpen }: { b: Build; on: boolean; onOpen: () => void }) {
   return (
     <button
@@ -168,6 +176,7 @@ export default function BuildLab() {
   const sceneRef = useRef<BuildLabHandle | null>(null);
   const [step, setStep] = useState(0);
   const [open, setOpen] = useState<number | null>(null);
+  const [tour, setTour] = useState(false);
 
   const focus = useCallback((k: number) => { sceneRef.current?.setProgress(k); setStep(prev => (prev === k ? prev : k)); }, []);
 
@@ -237,6 +246,9 @@ export default function BuildLab() {
           <p className="text-base md:text-lg text-white/60 font-light leading-relaxed max-w-xl">
             Eight products, designed, specified and shipped with AI as my build team. Tap any building to explore. Codenamed — clients withheld.
           </p>
+          <button onClick={() => setTour(true)} className="mt-7 group inline-flex items-center gap-3 rounded-full bg-orange-500 hover:bg-orange-400 transition-colors pl-6 pr-2 py-2 text-sm font-medium text-white">
+            Take the 3D tour <span className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center transition-transform group-hover:scale-110">▶</span>
+          </button>
         </div>
 
         <div className="relative lg:grid lg:grid-cols-12 lg:gap-10">
@@ -287,6 +299,7 @@ export default function BuildLab() {
         </div>
       </div>
 
+      <Tour open={tour} onClose={() => setTour(false)} heading="Inside the Build Lab" steps={TOUR_STEPS} mount={mountLabTour} />
       <DetailSheet open={open !== null} onClose={() => setOpen(null)} label={open !== null ? BUILDS[open].name : ""}>
         {open !== null && <Detail b={BUILDS[open]} />}
       </DetailSheet>

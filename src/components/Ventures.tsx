@@ -7,6 +7,7 @@ import { SplitReveal } from "@/components/fx/Reveal";
 import { EASE } from "@/lib/motion";
 import DetailSheet from "@/components/fx/DetailSheet";
 import SnapCarousel from "@/components/fx/SnapCarousel";
+import Tour, { TourScene } from "@/components/fx/Tour";
 import { STORIES } from "@/components/Journey";
 
 const VENTURES = [
@@ -44,6 +45,13 @@ const VENTURES = [
 
 const CYCLE_MS = 6500;
 
+const TOUR_STEPS = VENTURES.map(v => ({ kicker: `${v.when} · ${v.role}`, title: v.name, body: v.line }));
+async function mountVenturesTour(cv: HTMLCanvasElement, lb: HTMLElement): Promise<TourScene | null> {
+  const { mountVentures } = await import("@/lib/venturesScene");
+  const s = mountVentures(cv, lb, VENTURES.map(v => v.label), () => {});
+  return s && { go: s.select, setActive: s.setActive, resize: s.resize, dispose: s.dispose };
+}
+
 export default function Ventures() {
   const secRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -53,6 +61,7 @@ export default function Ventures() {
   const [inView, setInView] = useState(false);
   const [paused, setPaused] = useState(false);
   const [story, setStory] = useState<number | null>(null);
+  const [tour, setTour] = useState(false);
   const onSwipe = useCallback((i: number) => { setActive(i); setPaused(true); clearTimeout(holdT.current); holdT.current = setTimeout(() => setPaused(false), 15000); }, []);
   const holdT = useRef<ReturnType<typeof setTimeout>>();
 
@@ -106,6 +115,9 @@ export default function Ventures() {
             parts={["What I've built\n", { text: "on the ground.", className: "font-display italic text-orange-400" }]}
             className="text-5xl md:text-6xl xl:text-7xl font-semibold tracking-tight leading-[0.98] text-white"
           />
+          <button onClick={() => setTour(true)} className="mt-7 group inline-flex items-center gap-3 rounded-full border border-white/25 hover:bg-white/10 transition-colors pl-6 pr-2 py-2 text-sm font-medium text-white">
+            Take the 3D tour <span className="w-9 h-9 rounded-full bg-orange-500 flex items-center justify-center transition-transform group-hover:scale-110">▶</span>
+          </button>
         </div>
 
 
@@ -199,6 +211,7 @@ export default function Ventures() {
         </div>
       </div>
 
+      <Tour open={tour} onClose={() => setTour(false)} heading="Walk the ground" steps={TOUR_STEPS} mount={mountVenturesTour} />
       <DetailSheet open={story !== null} onClose={() => setStory(null)} label={story !== null ? VENTURES[story].name : ""}>
         {story !== null && (() => {
           const v = VENTURES[story], st = STORIES.find(x => x.id === v.id);

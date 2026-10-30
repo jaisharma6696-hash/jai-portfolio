@@ -9,11 +9,13 @@ export default function SnapCarousel({
 }: { items: ReactNode[]; active?: number; onActive?: (i: number) => void; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const fromSwipe = useRef(false);
+  const auto = useRef(0);
 
   useEffect(() => {
     const el = ref.current; if (!el) return;
     let raf = 0;
     const onScroll = () => {
+      if (performance.now() < auto.current) return; // our own programmatic scroll
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(() => {
         const mid = el.scrollLeft + el.clientWidth / 2;
@@ -35,6 +37,7 @@ export default function SnapCarousel({
     if (fromSwipe.current) { fromSwipe.current = false; return; }
     const el = ref.current, c = el?.children[active] as HTMLElement | undefined;
     if (!el || !c) return;
+    auto.current = performance.now() + 900;
     el.scrollTo({ left: c.offsetLeft - (el.clientWidth - c.offsetWidth) / 2, behavior: "smooth" });
   }, [active]);
 
