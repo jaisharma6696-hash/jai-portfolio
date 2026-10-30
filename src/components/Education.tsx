@@ -7,12 +7,12 @@ import { EASE } from "@/lib/motion";
 const EDUCATION = [
   {
     institution: "MDI Gurgaon",
-    degree: "PGDM — Strategic Management",
+    degree: "PGDM — Strategic Management · 2023–25",
     desc: "Structured strategic thinking, organizational behavior, and decision frameworks. As Founding Member of the Industry Interaction Committee, helped organize a CHRO Summit with senior leaders from major public- and private-sector enterprises."
   },
   {
     institution: "The NorthCap University",
-    degree: "BBA",
+    degree: "BBA — General Management · 2014–17",
     desc: "Introduced the vocabulary of business: finance, marketing, operations. Exposure to Dubai during this period shaped an early understanding of global retail environments and consumer behavior."
   },
   {
@@ -68,6 +68,25 @@ export default function Education() {
               </motion.li>
             ))}
           </ol>
+
+          <div className="mt-10 pt-8 border-t border-white/[0.06] grid sm:grid-cols-2 gap-8">
+            <div>
+              <p className="text-[11px] font-mono text-white/40 uppercase tracking-[0.25em] mb-4">Certifications</p>
+              <ul className="space-y-2 text-white/70 font-light">
+                <li>BCG — Strategy Consulting</li>
+                <li>BCG — X.Ventures: Operating Models & New Business Design</li>
+                <li>PMI — Prompt Engineering & Practical Gen AI</li>
+              </ul>
+            </div>
+            <div>
+              <p className="text-[11px] font-mono text-white/40 uppercase tracking-[0.25em] mb-4">Recognition</p>
+              <ul className="space-y-2 text-white/70 font-light">
+                <li>Speaker — CII, Government of India MSME initiative</li>
+                <li>Featured — &ldquo;Champions of D2C&rdquo; podcast</li>
+                <li>Top 300 Challenger Brands of India</li>
+              </ul>
+            </div>
+          </div>
         </motion.div>
 
       </div>

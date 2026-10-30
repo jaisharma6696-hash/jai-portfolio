@@ -6,10 +6,10 @@ import { SplitReveal } from "@/components/fx/Reveal";
 import { EASE } from "@/lib/motion";
 
 const PROOF_OF_WORK = [
-  { to: 10, prefix: "₹", suffix: " Cr", label: "ARR revenue built from zero" },
-  { to: 450, suffix: "+", label: "Retail outlets" },
-  { to: 200, suffix: "+", label: "Stakeholders influenced" },
-  { to: 40, suffix: "%", label: "Faster decision cycles" },
+  { to: 1200, prefix: "₹", suffix: " Cr", label: "Order-book pipeline built across 5 business units" },
+  { to: 400, prefix: "₹", suffix: " Cr", label: "Converted into won mandates" },
+  { to: 2500, suffix: "+", label: "Employees on a digital platform I helped launch" },
+  { to: 40, prefix: "~", suffix: "%", label: "Faster executive decisions, 200+ leaders" },
 ];
 
 const DOMAINS = [
@@ -58,10 +58,10 @@ export default function ExperienceSnapshot() {
             <p className="text-xs font-mono text-white/30 uppercase tracking-[0.2em] mb-10 pb-4 border-b border-white/5">
               Proof of Work
             </p>
-            <div className="grid grid-cols-2 gap-x-8 gap-y-10">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-8 sm:gap-y-10">
               {PROOF_OF_WORK.map(m => (
                 <div key={m.label} className="group">
-                  <div className="font-display text-5xl md:text-6xl text-white leading-none mb-3 group-hover:text-amber-200 transition-colors">
+                  <div className="font-display text-4xl md:text-6xl text-white leading-none mb-3 group-hover:text-amber-200 transition-colors">
                     <CountUp to={m.to} prefix={m.prefix} suffix={m.suffix} />
                   </div>
                   <p className="text-sm text-white/50 font-light tracking-wide">{m.label}</p>
@@ -69,7 +69,7 @@ export default function ExperienceSnapshot() {
               ))}
             </div>
             <p className="mt-10 pt-6 border-t border-white/5 text-white/70 font-light text-lg">
-              Multiple ventures <span className="font-display italic text-amber-200/80">across sectors.</span>
+              8+ years · ₹1.5 Cr+ as a founder in 18 months · <span className="font-display italic text-amber-200/80">4,000+ users in two months.</span>
             </p>
           </motion.div>
         </div>

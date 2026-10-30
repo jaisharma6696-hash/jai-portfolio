@@ -9,13 +9,15 @@ const STORIES = [
   {
     id: "beantree",
     title: "Beantree Foods",
-    role: "Co-Founder & Operator",
+    subtitle: "2017 – 2023",
+    role: "Co-Founder & Strategy Lead",
     industry: "FMCG / Brand Architecture",
     content: [
       "Built an FMCG brand from zero. Strategy creates the vision. Execution over theory.",
       "Beantree Foods was a masterclass in raw commercial gravity. What began as a product thesis quickly evolved into an exercise in scaling complex distribution logistics, margin optimization, and brand equity in a hyper-competitive landscape.",
       "Building the brand required full-stack execution. This meant establishing product manufacturing pipelines, engineering packaging psychology designed for immediate shelf-impact, and aggressively mapping supply chains to optimize velocity.",
-      "Under my operational leadership, we scaled the venture from concept to ₹10 Cr+ ARR. We successfully penetrated 450+ retail footprints across 8+ cities, systematically expanding our market share while maintaining strict unit economics.",
+      "We scaled to ₹1.5 Cr+ revenue in 18 months across 150+ A-category retail outlets in Delhi, Punjab, Uttar Pradesh, Rajasthan and Jammu — and grew the range from 20 to 30 SKUs through continuous product innovation.",
+      "I built and led a 35+ member sales organisation with area and regional manager layers, designed the distributor model and territory targets, and cut procurement cost ~20% through vendor negotiation and process standardisation.",
       "The greatest lesson was not in making the product—it was in architecting the distributor operating model to ensure the product survived the shelf. Strategy is meaningless if the unit economics fail at the cashier."
     ],
   },
@@ -34,10 +36,11 @@ const STORIES = [
   {
     id: "bite-me",
     title: "Bite Me",
-    role: "Experience Architect",
-    industry: "Experiential Hospitality",
+    subtitle: "2023 – 2025 · CEO's Office",
+    role: "Entrepreneur in Residence — Brand Launch",
+    industry: "Food & Beverage",
     content: [
-      "An experiential hospitality brand built around curated dining events where atmosphere and storytelling become the product.",
+      "An F&B brand built and launched end to end from the CEO's office of a hospitality group — concept, positioning, menu design, pricing and launch.",
       "Instead of building a traditional restaurant with fixed, heavy overhead, Bite Me was designed as an experiment in experiential leverage. We utilized asset-light operations to craft ephemeral, high-impact dining events.",
       "These events sold exclusivity, community engineering, and narrative. It proved that modern brand equity isn’t just about having a physical product—it’s about architecting moments that people actively want to align their own identities with."
     ],
@@ -45,8 +48,9 @@ const STORIES = [
   {
     id: "supper-club",
     title: "The Supper Club",
-    role: "Curator",
-    industry: "Private Dining",
+    subtitle: "2023 – 2025 · CEO's Office",
+    role: "Entrepreneur in Residence — Brand Launch",
+    industry: "Food & Beverage",
     content: [
       "A private dining format focused on curated culinary gatherings and community experiences.",
       "The Supper Club stripped away the noise of commercial dining to focus purely on the sociology of the table. By curating not just the menu but the guest list, it became an exercise in intentional network design.",
@@ -56,24 +60,29 @@ const STORIES = [
   {
     id: "bodega",
     title: "The Back Alley Bodega",
-    role: "Concept Architect",
-    industry: "Cultural Retail",
+    subtitle: "2023 – 2025 · CEO's Office",
+    role: "Entrepreneur in Residence — Apparel Line",
+    industry: "Apparel & Lifestyle",
     content: [
-      "A lifestyle retail concept exploring neighbourhood retail as cultural identity and curated discovery.",
+      "An apparel and lifestyle line exploring neighbourhood culture as identity and curated discovery.",
       "The Bodega was conceptualized as an anti-transactional space. We treated a retail footprint not as a mere checkout line, but as an active, curated neighborhood hub designed for cultural discovery.",
-      "Developing this required deep mapping of urban consumer behaviour, lifestyle adjacencies, and the mechanics of engineering cultural relevance within physical spaces."
+      "Developing this required deep mapping of urban consumer behaviour, lifestyle adjacencies, and the mechanics of engineering cultural relevance.",
+      "Across this CEO's-office portfolio I owned market entry and go-to-market end to end — one initiative reached 4,000+ monthly active users in two months across 15+ offline locations and ₹1 Cr in new revenue — and drove the annual operating plan to ~80% of target."
     ],
   },
   {
     id: "rodic",
     title: "Rodic Consultants",
+    subtitle: "2025 – now · Chief of Staff Cell",
     role: "Senior Program Manager — Strategy & Transformation",
     industry: "Enterprise Strategy",
     content: [
       "Working inside the Chief of Staff cell to architect enterprise-scale transformation.",
       "Rodic engineers master infrastructure at national scale. Operating within the executive suite, my mandate involved driving firm-wide strategic initiatives and transformation across multiple complex business units.",
       "This was an intensive exercise in complex systems engineering. I designed enterprise operating models, structured stringent governance and execution frameworks, and rapidly built AI-driven decision-support nerve centers.",
-      "Key Outcome: I architected and deployed enterprise analytics and MIS systems that successfully collapsed executive decision-turnaround time by 40% across 200+ senior stakeholders.",
+      "Growth: partnered with business-unit and central BD teams on strategic planning that built a ₹1,200 Cr order-book pipeline across 5 business units, converting ₹400 Cr into won mandates. Structured a geospatial-analytics joint venture and a board-level international market-entry strategy.",
+      "Digital & AI: core team for an enterprise digital platform for 2,500+ employees (ticketing, HR workflows, recruitment, timesheets, approvals), and author of the firm's AI Deployment & Integration Framework and 2025–28 digital roadmap.",
+      "Key Outcome: I architected and deployed enterprise analytics and MIS systems that cut executive decision-turnaround time by ~40% across 200+ senior stakeholders, with governance cadences improving cross-functional response times ~30%.",
       "Furthermore, I designed cross-functional KPI frameworks linking HR, talent acquisition, and operational delivery—ensuring high-level strategy cascaded into measurable, transparent outcomes."
     ],
   }
@@ -91,7 +100,8 @@ function StoryCard({ story, isFirst }: { story: any; isFirst: boolean }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-100px" }}
       transition={{ duration: 0.9, ease: EASE }}
-      className={`py-24 grid lg:grid-cols-12 gap-12 ${isFirst ? 'pt-0' : ''}`}
+      id={`story-${story.id}`}
+      className={`scroll-mt-24 py-24 grid lg:grid-cols-12 gap-12 ${isFirst ? 'pt-0' : ''}`}
     >
       {/* Left Column: Title & Metadata & Logo */}
       <div className="lg:col-span-5 lg:sticky lg:top-32 lg:self-start">

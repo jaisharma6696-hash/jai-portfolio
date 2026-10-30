@@ -5,8 +5,9 @@ import { motion, useScroll, useMotionValueEvent, AnimatePresence } from "framer-
 import { EASE, scrollToTarget } from "@/lib/motion";
 
 const NAV_ITEMS = [
-  { label: "Journey", id: "journey" },
-  { label: "Builds", id: "builds" },
+  { label: "Ventures", id: "ventures" },
+  { label: "AI Builds", id: "builds" },
+  { label: "Method", id: "method" },
   { label: "Work", id: "work" },
   { label: "Architecture", id: "stack" },
   { label: "Contact", id: "contact" },
@@ -66,11 +67,11 @@ export default function Navigation() {
               jvs
             </span>
           </button>
-          <span className="md:hidden pl-2 pr-3 text-sm font-light text-white/80 tracking-tight">Jai Vardhan Sharma</span>
+          <span className="lg:hidden pl-2 pr-3 text-sm font-light text-white/80 tracking-tight">Jai Vardhan Sharma</span>
 
-          <div className="hidden md:block w-px h-5 bg-white/10 mx-1" />
+          <div className="hidden lg:block w-px h-5 bg-white/10 mx-1" />
 
-          <nav className="hidden md:flex items-center">
+          <nav className="hidden lg:flex items-center">
             {NAV_ITEMS.map(item => (
               <button
                 key={item.id}
@@ -85,11 +86,11 @@ export default function Navigation() {
             ))}
           </nav>
 
-          <div className="hidden md:block w-px h-5 bg-white/10 mx-1" />
+          <div className="hidden lg:block w-px h-5 bg-white/10 mx-1" />
 
           <a
             href="mailto:hello@jaivardhansharma.com"
-            className="hidden md:inline-flex group relative rounded-full p-[1px] overflow-hidden"
+            className="hidden lg:inline-flex group relative rounded-full p-[1px] overflow-hidden"
           >
             <span className="absolute inset-0 ring-gradient opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <span className="relative rounded-full bg-white text-black px-4 py-2 text-[11px] font-mono uppercase tracking-[0.18em]">
@@ -99,7 +100,7 @@ export default function Navigation() {
 
           {/* Mobile menu toggle */}
           <button
-            className="md:hidden flex flex-col justify-center gap-[5px] w-9 h-9 items-center rounded-full bg-white/[0.06]"
+            className="lg:hidden flex flex-col justify-center gap-[5px] w-9 h-9 items-center rounded-full bg-white/[0.06]"
             onClick={() => setMobileOpen(v => !v)}
             aria-label={mobileOpen ? "Close menu" : "Open menu"}
           >
@@ -118,7 +119,7 @@ export default function Navigation() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.98 }}
             transition={{ duration: 0.3, ease: EASE }}
-            className="fixed top-[76px] left-4 right-4 z-40 md:hidden liquid-glass bg-slate-950/80 rounded-3xl"
+            className="fixed top-[76px] left-4 right-4 z-40 lg:hidden liquid-glass bg-slate-950/80 rounded-3xl"
           >
             <nav className="flex flex-col px-7 py-6 gap-5">
               {NAV_ITEMS.map((item, i) => (

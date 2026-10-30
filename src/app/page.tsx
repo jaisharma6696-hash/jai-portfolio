@@ -3,6 +3,8 @@
 import ScrollyCanvas from "@/components/ScrollyCanvas";
 import Journey from "@/components/Journey";
 import BuildLab from "@/components/BuildLab";
+import Ventures from "@/components/Ventures";
+import HowIWork from "@/components/HowIWork";
 import Projects from "@/components/Projects";
 import PsychologicalStack from "@/components/PsychologicalStack";
 import ExperienceSnapshot from "@/components/ExperienceSnapshot";
@@ -30,7 +32,7 @@ export default function Home() {
   return (
     <main 
       onMouseMove={handleMouseMove}
-      className="relative bg-slate-950 min-h-screen text-slate-50 selection:bg-white/20"
+      className="relative bg-slate-950 min-h-screen text-slate-50 selection:bg-white/20 overflow-x-clip"
     >
       <SmoothScroll />
       <Loader />
@@ -50,11 +52,17 @@ export default function Home() {
       </div>
 
       <div className="relative z-10">
-        {/* 2. Story / Timeline */}
+        {/* 2. Ventures island */}
+        <Ventures />
+
+        {/* Story / Timeline */}
         <Journey />
 
         {/* 3. Build Lab / Codenamed builds map */}
         <BuildLab />
+
+        {/* How I work with AI */}
+        <HowIWork />
 
         {/* 3. Capabilities / What Jai Builds */}
         <Projects />

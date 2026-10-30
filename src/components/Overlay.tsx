@@ -80,9 +80,9 @@ export default function Overlay({ scrollProgress }: OverlayProps) {
         </h1>
         <motion.p
           initial={{ opacity: 0, letterSpacing: "0.5em" }}
-          animate={intro ? { opacity: 1, letterSpacing: "0.22em" } : {}}
+          animate={intro ? { opacity: 1, letterSpacing: "0.18em" } : {}}
           transition={{ duration: 1.4, ease: EASE, delay: 0.45 }}
-          className="text-lg md:text-xl text-white/90 font-light uppercase mb-8"
+          className="text-base md:text-xl text-white/90 font-light uppercase mb-8 text-center"
         >
           Strategy. <span className="text-white/50">Brands.</span> Systems.
         </motion.p>

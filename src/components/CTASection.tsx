@@ -111,7 +111,13 @@ export default function CTASection() {
             Open to strategic conversations — ventures, transformation mandates, partnerships, and ideas worth pursuing.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-5">
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-10 max-w-2xl mx-auto">
+            {["Chief of Staff", "Strategy & Transformation", "Digital & AI Programs", "Business Development"].map(r => (
+              <span key={r} className="px-3.5 py-1.5 rounded-full border border-white/10 bg-white/[0.03] text-white/65 text-xs tracking-wide">{r}</span>
+            ))}
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-5">
             <a
               ref={btnRefs[0]}
               onMouseEnter={enter(0)}
@@ -138,6 +144,12 @@ export default function CTASection() {
               className="liquid-glass px-10 py-4 rounded-full text-white/75 text-xs font-mono tracking-widest hover:bg-white/[0.07] hover:text-white transition-all duration-300 hover:scale-[1.03] uppercase"
             >
               hello@jaivardhansharma.com
+            </a>
+            <a
+              href="mailto:hello@jaivardhansharma.com?subject=CV%20request"
+              className="text-xs font-mono tracking-widest uppercase text-amber-400/90 hover:text-amber-300 border-b border-amber-500/30 pb-1 transition-colors"
+            >
+              Request my CV ↗
             </a>
           </div>
         </motion.div>
