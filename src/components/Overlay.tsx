@@ -1,12 +1,37 @@
 "use client";
 
+import { useEffect, useState, ReactNode } from "react";
 import { motion, MotionValue, useTransform } from "framer-motion";
+import { EASE } from "@/lib/motion";
+
+// Masked line that rises once the intro loader has cleared.
+function Line({ show, delay, children, className = "" }: { show: boolean; delay: number; children: ReactNode; className?: string }) {
+  return (
+    <span className={`block overflow-hidden pb-[0.1em] ${className}`}>
+      <motion.span
+        className="block"
+        initial={{ y: "105%" }}
+        animate={show ? { y: "0%" } : { y: "105%" }}
+        transition={{ duration: 1.1, ease: EASE, delay }}
+      >
+        {children}
+      </motion.span>
+    </span>
+  );
+}
 
 interface OverlayProps {
   scrollProgress: MotionValue<number>;
 }
 
 export default function Overlay({ scrollProgress }: OverlayProps) {
+  const [intro, setIntro] = useState(false);
+  useEffect(() => {
+    const on = () => setIntro(true);
+    window.addEventListener("intro-done", on);
+    const fallback = setTimeout(on, 6000);
+    return () => { window.removeEventListener("intro-done", on); clearTimeout(fallback); };
+  }, []);
   
   // Helper to map a progress window to opacity
   // Each stage occupies approx 10-12% of the scroll journey. 
@@ -50,24 +75,33 @@ export default function Overlay({ scrollProgress }: OverlayProps) {
         style={{ y: y1, opacity: op1 }}
       >
         <h1 className="text-5xl md:text-7xl lg:text-9xl font-light tracking-tight text-center drop-shadow-xl mb-6 leading-none">
-          Jai Vardhan <span className="font-light text-white/80">Sharma</span>
+          <Line show={intro} delay={0.05}>Jai Vardhan</Line>
+          <Line show={intro} delay={0.18}><span className="font-display italic text-white/85">Sharma</span></Line>
         </h1>
-        <p className="text-lg md:text-xl text-white/90 font-light tracking-widest uppercase mb-8">
-          Strategy. <span className="text-white/50">Brands.</span> Systems.
-        </p>
-        <div className="text-sm md:text-base text-white/60 text-center tracking-wide leading-relaxed max-w-lg space-y-4">
-          <p>Building ventures, systems, and ideas that scale.</p>
-          <p className="italic">Born into questions. Built through execution.</p>
-        </div>
-        
-        {/* Scroll Cue */}
-        <motion.div 
-          className="absolute bottom-16 flex flex-col items-center gap-3 opacity-50"
-          animate={{ y: [0, 8, 0] }}
-          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+        <motion.p
+          initial={{ opacity: 0, letterSpacing: "0.5em" }}
+          animate={intro ? { opacity: 1, letterSpacing: "0.22em" } : {}}
+          transition={{ duration: 1.4, ease: EASE, delay: 0.45 }}
+          className="text-lg md:text-xl text-white/90 font-light uppercase mb-8"
         >
-          <span className="text-xs font-mono uppercase tracking-[0.3em]">Scroll</span>
-          <div className="w-[1px] h-8 bg-gradient-to-b from-white to-transparent" />
+          Strategy. <span className="text-white/50">Brands.</span> Systems.
+        </motion.p>
+        <div className="text-sm md:text-base text-white/60 text-center tracking-wide leading-relaxed max-w-lg space-y-4">
+          <Line show={intro} delay={0.7}>Building ventures, systems, and ideas that scale.</Line>
+          <Line show={intro} delay={0.8}><span className="font-display italic text-lg md:text-xl text-white/80">Born into questions. Built through execution.</span></Line>
+        </div>
+
+        {/* Scroll Cue */}
+        <motion.div
+          className="absolute bottom-14 flex flex-col items-center gap-3"
+          initial={{ opacity: 0 }}
+          animate={intro ? { opacity: 0.6 } : {}}
+          transition={{ delay: 1.2, duration: 0.8 }}
+        >
+          <span className="text-[10px] font-mono uppercase tracking-[0.35em]">Scroll</span>
+          <div className="relative w-px h-12 bg-white/15 overflow-hidden">
+            <div className="scroll-cue-line absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-transparent via-amber-400 to-transparent" />
+          </div>
         </motion.div>
       </motion.div>
 
@@ -76,10 +110,10 @@ export default function Overlay({ scrollProgress }: OverlayProps) {
         className="absolute inset-0 flex flex-col items-start justify-center p-8 md:p-24"
         style={{ y: y2, opacity: op2 }}
       >
-        <div className="max-w-2xl bg-black/20 backdrop-blur-sm p-8 rounded-2xl border border-white/5 shadow-2xl">
+        <div className="max-w-2xl liquid-glass bg-slate-950/30 p-8 rounded-3xl">
           <p className="text-[10px] font-mono text-white/40 uppercase tracking-[0.4em] mb-4">Chapter 01</p>
           <h2 className="text-4xl md:text-6xl font-light leading-tight mb-6 drop-shadow-lg">
-            Curiosity as an <br/><span className="text-white/60">operating model.</span>
+            Curiosity as an <br/><span className="font-display italic text-white/70">operating model.</span>
           </h2>
           <p className="text-xl md:text-2xl text-white/70 font-light leading-relaxed">
             Early Delhi ventures. <span className="italic text-white">Execution beats intention.</span>
@@ -92,10 +126,10 @@ export default function Overlay({ scrollProgress }: OverlayProps) {
         className="absolute inset-0 flex flex-col items-end justify-center p-8 md:p-24 text-right"
         style={{ y: y3, opacity: op3 }}
       >
-        <div className="max-w-2xl bg-black/20 backdrop-blur-sm p-8 rounded-2xl border border-white/5 shadow-2xl">
+        <div className="max-w-2xl liquid-glass bg-slate-950/30 p-8 rounded-3xl">
           <p className="text-[10px] font-mono text-white/40 uppercase tracking-[0.4em] mb-4">Chapter 02</p>
           <h2 className="text-4xl md:text-6xl font-light leading-tight mb-6 drop-shadow-lg">
-            Observing the <br/><span className="italic text-white/60">market machine.</span>
+            Observing the <br/><span className="font-display italic text-white/70">market machine.</span>
           </h2>
           <p className="text-xl md:text-2xl text-white/70 font-light leading-relaxed">
             Dubai. Consumer psychology, brand scale, spatial design.
@@ -108,10 +142,10 @@ export default function Overlay({ scrollProgress }: OverlayProps) {
         className="absolute inset-0 flex flex-col items-center justify-center p-8 md:p-24 text-center"
         style={{ y: y4, opacity: op4 }}
       >
-        <div className="max-w-3xl bg-black/20 backdrop-blur-md p-10 rounded-2xl border border-white/10 shadow-2xl">
+        <div className="max-w-3xl liquid-glass bg-slate-950/30 p-10 rounded-3xl">
           <p className="text-[10px] font-mono text-white/40 uppercase tracking-[0.4em] mb-4">Chapter 03</p>
           <h2 className="text-4xl md:text-6xl lg:text-7xl font-light leading-tight mb-6 drop-shadow-lg">
-            Formalising the <br/><span className="font-medium text-white/80">frameworks.</span>
+            Formalising the <br/><span className="font-display italic text-white/85">frameworks.</span>
           </h2>
           <p className="text-xl md:text-2xl text-white/80 font-light leading-relaxed">
             MDI Gurgaon. Instinct meets structured strategy.
@@ -124,10 +158,10 @@ export default function Overlay({ scrollProgress }: OverlayProps) {
         className="absolute inset-0 flex flex-col items-start justify-center p-8 md:p-24"
         style={{ y: y5, opacity: op5 }}
       >
-        <div className="max-w-2xl bg-black/20 backdrop-blur-sm p-8 rounded-2xl border border-white/5 shadow-2xl">
+        <div className="max-w-2xl liquid-glass bg-slate-950/30 p-8 rounded-3xl">
           <p className="text-[10px] font-mono text-white/40 uppercase tracking-[0.4em] mb-4">Chapter 04</p>
           <h2 className="text-4xl md:text-6xl font-light leading-tight mb-6 drop-shadow-lg">
-            Building markets.<br/><span className="text-white/60">Not just brands.</span>
+            Building markets.<br/><span className="font-display italic text-white/70">Not just brands.</span>
           </h2>
           <p className="text-xl md:text-2xl text-white/70 font-light leading-relaxed">
             Beantree, Bodega, and <span className="italic text-white">consumer culture.</span>
@@ -140,7 +174,7 @@ export default function Overlay({ scrollProgress }: OverlayProps) {
         className="absolute inset-0 flex flex-col items-end justify-center p-8 md:p-24 text-right"
         style={{ y: y6, opacity: op6 }}
       >
-        <div className="max-w-3xl bg-black/20 backdrop-blur-sm p-8 rounded-2xl border border-white/5 shadow-2xl">
+        <div className="max-w-3xl liquid-glass bg-slate-950/30 p-8 rounded-3xl">
           <p className="text-[10px] font-mono text-white/40 uppercase tracking-[0.4em] mb-4">Chapter 05</p>
           <h2 className="text-3xl md:text-5xl lg:text-6xl font-light leading-tight mb-6 drop-shadow-lg">
             Enterprise <br/>architecture. <span className="text-white/60 text-4xl">Inside Rodic.</span>
@@ -157,7 +191,7 @@ export default function Overlay({ scrollProgress }: OverlayProps) {
         style={{ y: y7, opacity: op7 }}
       >
         <h2 className="text-5xl md:text-7xl lg:text-8xl font-light tracking-tight mb-6 drop-shadow-2xl">
-          The next <span className="italic font-normal">iteration.</span>
+          The next <span className="font-display italic text-amber-200/90">iteration.</span>
         </h2>
         <p className="text-xl md:text-3xl text-white/80 font-light tracking-wide leading-relaxed">
           Systems. Institutions. <span className="text-white font-medium drop-shadow-md">Outcomes that outlast the cycle.</span>

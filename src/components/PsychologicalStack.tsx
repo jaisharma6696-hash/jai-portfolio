@@ -1,6 +1,11 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { SplitReveal } from "@/components/fx/Reveal";
+import { EASE } from "@/lib/motion";
+
+// Chamfered corners: big cut top-left, small cut bottom-right.
+const CUT = "polygon(44px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 44px)";
 
 const STACK_LAYERS = [
   {
@@ -54,9 +59,10 @@ export default function PsychologicalStack() {
           <h3 className="text-xs font-mono text-amber-500/70 uppercase tracking-[0.3em] mb-4">
             The Operator&apos;s Architecture
           </h3>
-          <h2 className="text-4xl md:text-6xl font-light text-white tracking-tight leading-tight mb-6">
-            Psychological <span className="italic text-amber-500/90">Stack.</span>
-          </h2>
+          <SplitReveal
+            parts={["Psychological", { text: "Stack.", className: "font-display italic text-amber-400/90" }]}
+            className="text-4xl md:text-6xl font-light text-white tracking-tight leading-tight mb-6"
+          />
         </motion.div>
 
         {/* 1-Line Identity Hero */}
@@ -66,35 +72,34 @@ export default function PsychologicalStack() {
           viewport={{ once: true }}
           className="max-w-4xl mx-auto bg-gradient-to-br from-white/[0.05] to-transparent border border-white/10 p-8 md:p-12 rounded-3xl mb-24 text-center backdrop-blur-xl shadow-2xl"
         >
-          <p className="text-2xl md:text-4xl font-light leading-snug text-white/90 italic">
+          <p className="text-3xl md:text-5xl font-display italic leading-snug text-white/90">
             &ldquo;A systems builder who treats ambiguity as raw material — and turns it into architecture.&rdquo;
           </p>
         </motion.div>
 
-        {/* The Layers */}
-        <div className="max-w-4xl mx-auto space-y-4">
+        {/* The Layers — staggered chamfered cards */}
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {STACK_LAYERS.map((layer, i) => (
-            <motion.div 
+            <motion.div
               key={layer.layer}
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ delay: i * 0.1 }}
-              className="group flex flex-col md:flex-row gap-4 md:gap-12 md:items-start p-6 rounded-2xl hover:bg-white/[0.02] transition-colors border border-transparent hover:border-white/5"
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-60px" }}
+              transition={{ delay: (i % 3) * 0.1, duration: 0.9, ease: EASE }}
+              className={`group ${i % 3 === 1 ? "lg:mt-20" : ""} ${i === 0 ? "md:col-span-2 lg:col-span-1" : ""}`}
             >
-              <div className="flex items-center gap-6 md:w-1/3 shrink-0">
-                <span className="text-sm font-mono text-amber-500/40 group-hover:text-amber-500/80 transition-colors">
-                  {layer.layer}
-                </span>
-                <h4 className="text-lg md:text-xl font-medium tracking-wide text-white/90 group-hover:text-amber-50 transition-colors">
-                  {layer.name}
-                </h4>
-              </div>
-              
-              <div className="md:w-2/3">
-                <p className="text-white/50 font-light leading-relaxed group-hover:text-white/70 transition-colors">
-                  {layer.desc}
-                </p>
+              <div className="p-px bg-gradient-to-br from-amber-500/40 via-white/10 to-white/5 group-hover:from-amber-400/80 transition-colors duration-500 h-full" style={{ clipPath: CUT }}>
+                <div className="relative h-full min-h-[230px] bg-slate-950 bg-gradient-to-br from-white/[0.04] to-transparent p-8 pl-10 flex flex-col" style={{ clipPath: CUT }}>
+                  <span className="font-display italic text-6xl text-amber-500/25 group-hover:text-amber-400/60 transition-colors duration-500 leading-none mb-6">
+                    {layer.layer}
+                  </span>
+                  <h4 className="text-lg md:text-xl font-medium tracking-wide text-white/90 group-hover:text-amber-50 transition-colors mb-3">
+                    {layer.name}
+                  </h4>
+                  <p className="text-white/50 font-light leading-relaxed text-[15px] group-hover:text-white/70 transition-colors">
+                    {layer.desc}
+                  </p>
+                </div>
               </div>
             </motion.div>
           ))}

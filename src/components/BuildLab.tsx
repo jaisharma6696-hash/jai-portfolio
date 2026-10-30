@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, MouseEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { BuildLabHandle } from "@/lib/buildLabScene";
+import { scrollToTarget } from "@/lib/motion";
 
 // Codenamed builds — no real names, clients or companies.
 const BUILDS = [
@@ -105,7 +106,7 @@ export default function BuildLab() {
   const jump = (k: number) => {
     const wr = wrapRef.current; if (!wr) return;
     const top = wr.getBoundingClientRect().top + window.scrollY;
-    window.scrollTo({ top: top + ((wr.offsetHeight - window.innerHeight) * k) / (N + 1), behavior: "smooth" });
+    scrollToTarget(top + ((wr.offsetHeight - window.innerHeight) * k) / (N + 1));
   };
 
   const b = step >= 1 && step <= N ? BUILDS[step - 1] : null;
@@ -139,7 +140,7 @@ export default function BuildLab() {
                       Project {b.code} — {b.kind}
                     </p>
                     <h2 className="text-5xl md:text-6xl font-light text-white tracking-tight leading-tight mb-6 drop-shadow-lg">
-                      {b.name}.
+                      <span className="font-display italic">{b.name}.</span>
                     </h2>
                     <p className="text-lg text-white/70 font-light leading-relaxed mb-8">{b.line}</p>
                     <div className="flex flex-wrap gap-2">
@@ -154,7 +155,7 @@ export default function BuildLab() {
                   <>
                     <h2 className="text-5xl md:text-6xl font-light text-white tracking-tight leading-tight mb-6 drop-shadow-lg">
                       Things I&apos;ve built.<br />
-                      <span className="text-white/50">Codenamed.</span>
+                      <span className="font-display italic text-white/60">Codenamed.</span>
                     </h2>
                     <p className="text-lg text-white/60 font-light leading-relaxed">
                       Eight builds across AI, events, infrastructure and commerce. Scroll to walk the map.
@@ -164,7 +165,7 @@ export default function BuildLab() {
                   <>
                     <h2 className="text-5xl md:text-6xl font-light text-white tracking-tight leading-tight mb-6 drop-shadow-lg">
                       Eight builds.<br />
-                      <span className="text-white/50">And counting.</span>
+                      <span className="font-display italic text-white/60">And counting.</span>
                     </h2>
                     <p className="text-lg text-white/60 font-light leading-relaxed">
                       Each one started as a problem worth a system. Names withheld; the thinking is on the map.

@@ -104,7 +104,7 @@ export default function CTASection() {
 
           <h2 className="text-4xl md:text-6xl lg:text-7xl font-light text-white tracking-tight leading-tight mb-6 drop-shadow-lg">
             Build systems that outlast <br />
-            <span className="text-white/50">founders, markets, and cycles.</span>
+            <span className="font-display italic text-white/60">founders, markets, and cycles.</span>
           </h2>
 
           <p className="text-white/30 font-light text-lg mb-16 max-w-xl mx-auto leading-relaxed">
@@ -121,9 +121,12 @@ export default function CTASection() {
               href="https://www.linkedin.com/in/jai-vardhan-sharma/"
               target="_blank"
               rel="noreferrer"
-              className="px-10 py-4 rounded-full bg-white text-black text-xs font-mono tracking-widest hover:bg-white/90 transition-all hover:scale-[1.02] uppercase"
+              className="group relative rounded-full p-[1.5px] overflow-hidden transition-transform duration-300 hover:scale-[1.03]"
             >
-              Connect on LinkedIn →
+              <span className="absolute inset-0 ring-gradient opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <span className="relative block px-10 py-4 rounded-full bg-white text-black text-xs font-mono tracking-widest uppercase">
+                Connect on LinkedIn <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">→</span>
+              </span>
             </a>
             <a
               ref={btnRefs[1]}
@@ -132,7 +135,7 @@ export default function CTASection() {
               onFocus={enter(1)}
               onBlur={leave}
               href="mailto:hello@jaivardhansharma.com"
-              className="px-10 py-4 rounded-full bg-transparent border border-white/15 text-white/70 text-xs font-mono tracking-widest hover:bg-white/[0.05] hover:text-white hover:border-white/30 transition-all uppercase"
+              className="liquid-glass px-10 py-4 rounded-full text-white/75 text-xs font-mono tracking-widest hover:bg-white/[0.07] hover:text-white transition-all duration-300 hover:scale-[1.03] uppercase"
             >
               hello@jaivardhansharma.com
             </a>

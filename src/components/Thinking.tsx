@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { SplitReveal, ScrollLit, Rise } from "@/components/fx/Reveal";
 
 const PRINCIPLES = [
   {
@@ -19,39 +19,34 @@ const PRINCIPLES = [
 
 export default function Thinking() {
   return (
-    <section className="relative py-32 bg-slate-950 px-6 md:px-12 lg:px-24 border-t border-white/5">
+    <section className="relative py-32 md:py-40 bg-slate-950 px-6 md:px-12 lg:px-24 border-t border-white/5">
       <div className="max-w-5xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          className="mb-16 text-center md:text-left"
-        >
-          <h3 className="text-sm font-mono text-amber-500/70 uppercase tracking-[0.3em] mb-4">
-            Philosophy
-          </h3>
-          <h2 className="text-4xl md:text-6xl font-light text-white tracking-tight">
-             <span className="italic text-amber-500/90">Thinking.</span>
-          </h2>
-        </motion.div>
+        <div className="mb-20 text-center md:text-left">
+          <Rise>
+            <h3 className="text-sm font-mono text-amber-500/70 uppercase tracking-[0.3em] mb-4">
+              Philosophy
+            </h3>
+          </Rise>
+          <SplitReveal
+            parts={[{ text: "Thinking.", className: "font-display italic text-amber-400/90" }]}
+            className="text-5xl md:text-7xl font-light text-white tracking-tight"
+          />
+        </div>
 
-        <div className="flex flex-col gap-12">
+        <div className="flex flex-col gap-24 md:gap-32">
           {PRINCIPLES.map((item, i) => (
-            <motion.div
-              key={item.title}
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ delay: i * 0.15, duration: 0.6 }}
-              className="group pl-6 md:pl-10 border-l border-amber-500/20 hover:border-amber-500/60 transition-colors"
-            >
-              <h4 className="text-2xl md:text-3xl font-light tracking-wide text-white mb-4 group-hover:text-amber-50 transition-colors">
-                {item.title}
-              </h4>
-              <p className="text-lg md:text-xl text-white/50 font-light leading-relaxed max-w-2xl group-hover:text-amber-100/70 transition-colors">
-                {item.desc}
-              </p>
-            </motion.div>
+            <div key={item.title} className="grid md:grid-cols-12 gap-6 md:gap-10">
+              <Rise className="md:col-span-4" delay={0.05}>
+                <p className="text-xs font-mono text-white/30 tracking-[0.3em] mb-3">0{i + 1}</p>
+                <h4 className="text-2xl md:text-3xl font-display italic text-amber-100/90 leading-tight">
+                  {item.title}
+                </h4>
+              </Rise>
+              <ScrollLit
+                text={item.desc}
+                className="md:col-span-8 text-3xl md:text-5xl font-light leading-[1.15] tracking-tight text-white"
+              />
+            </div>
           ))}
         </div>
       </div>

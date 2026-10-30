@@ -1,6 +1,9 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useRef } from "react";
+import { AnimatePresence, motion, useScroll, useSpring } from "framer-motion";
+import { SplitReveal } from "@/components/fx/Reveal";
+import { EASE } from "@/lib/motion";
 
 const STORIES = [
   {
@@ -87,7 +90,7 @@ function StoryCard({ story, isFirst }: { story: any; isFirst: boolean }) {
       initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-100px" }}
-      transition={{ duration: 0.8 }}
+      transition={{ duration: 0.9, ease: EASE }}
       className={`py-24 grid lg:grid-cols-12 gap-12 ${isFirst ? 'pt-0' : ''}`}
     >
       {/* Left Column: Title & Metadata & Logo */}
@@ -98,9 +101,10 @@ function StoryCard({ story, isFirst }: { story: any; isFirst: boolean }) {
           </p>
         )}
 
-        <h2 className={`font-light text-white tracking-tight leading-tight mb-6 drop-shadow-lg ${isFirst ? 'text-5xl md:text-7xl' : 'text-4xl md:text-5xl'}`}>
-          {story.title}
-        </h2>
+        <SplitReveal
+          parts={[story.title]}
+          className={`font-light text-white tracking-tight leading-tight mb-6 drop-shadow-lg ${isFirst ? 'text-5xl md:text-7xl' : 'text-4xl md:text-5xl'}`}
+        />
         
         {(story.role || story.industry) && (
           <div className="space-y-4 mb-8">
@@ -133,17 +137,23 @@ function StoryCard({ story, isFirst }: { story: any; isFirst: boolean }) {
           <div className="pt-4">
             <button 
               onClick={() => setIsOpen(!isOpen)}
-              className="text-sm font-mono tracking-widest uppercase text-amber-500/80 hover:text-amber-400 transition-colors border-b border-amber-500/30 pb-1"
+              aria-expanded={isOpen}
+              className="group inline-flex items-center gap-3 text-sm font-mono tracking-widest uppercase text-amber-500/80 hover:text-amber-400 transition-colors border-b border-amber-500/30 pb-1"
             >
-              {isOpen ? "Read Less" : "Discover the Full Story +"}
+              {isOpen ? "Read Less" : "Discover the Full Story"}
+              <motion.span animate={{ rotate: isOpen ? 45 : 0 }} transition={{ type: "spring", stiffness: 300, damping: 20 }} className="inline-block text-base leading-none">+</motion.span>
             </button>
 
+            <AnimatePresence initial={false}>
             {isOpen && (
               <motion.div 
+                key="more"
                 initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                className="mt-8 space-y-8 overflow-hidden"
+                animate={{ height: "auto", opacity: 1, transition: { height: { type: "spring", stiffness: 120, damping: 22 }, opacity: { duration: 0.5, delay: 0.1 } } }}
+                exit={{ height: 0, opacity: 0, transition: { height: { duration: 0.45, ease: EASE }, opacity: { duration: 0.2 } } }}
+                className="space-y-8 overflow-hidden"
               >
+                <div className="h-8" />
                 {/* Remaining Paragraphs */}
                 {story.content.slice(1).map((paragraph: string, idx: number) => (
                   <div key={idx} className="text-lg md:text-xl text-white/60 font-light leading-relaxed whitespace-pre-line">
@@ -168,6 +178,7 @@ function StoryCard({ story, isFirst }: { story: any; isFirst: boolean }) {
                 )}
               </motion.div>
             )}
+            </AnimatePresence>
           </div>
         )}
 
@@ -177,8 +188,16 @@ function StoryCard({ story, isFirst }: { story: any; isFirst: boolean }) {
 }
 
 export default function Journey() {
+  const ref = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start 0.6", "end 0.6"] });
+  const fill = useSpring(scrollYProgress, { stiffness: 120, damping: 30 });
+
   return (
-    <section id="journey" className="relative py-24 bg-slate-950 px-6 md:px-12 lg:px-24">
+    <section id="journey" ref={ref} className="relative py-24 bg-slate-950 px-6 md:px-12 lg:px-24">
+      {/* Progress rail */}
+      <div aria-hidden className="hidden md:block absolute left-6 lg:left-12 top-24 bottom-24 w-px bg-white/[0.07]">
+        <motion.div style={{ scaleY: fill }} className="absolute inset-0 origin-top bg-gradient-to-b from-amber-500/0 via-amber-500/70 to-amber-300" />
+      </div>
       <div className="max-w-6xl mx-auto divide-y divide-white/10">
         {STORIES.map((story, i) => (
           <StoryCard key={story.id} story={story} isFirst={i === 0} />

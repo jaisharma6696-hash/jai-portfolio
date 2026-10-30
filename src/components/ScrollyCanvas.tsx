@@ -51,6 +51,13 @@ export default function ScrollyCanvas({ frameCount }: ScrollyCanvasProps) {
     ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
   }, []);
 
+  // Let the intro loader know the first frames are in
+  useEffect(() => {
+    if (!initialReady) return;
+    window.__heroReady = true;
+    window.dispatchEvent(new Event("hero-ready"));
+  }, [initialReady]);
+
   // Update frame based on scroll — requestAnimationFrame throttled
   useMotionValueEvent(scrollYProgress, "change", (latest) => {
     if (!initialReady) return;

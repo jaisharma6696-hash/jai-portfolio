@@ -1,6 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
+import TiltCard from "@/components/fx/TiltCard";
+import { SplitReveal } from "@/components/fx/Reveal";
+import { EASE } from "@/lib/motion";
 
 const PROJECTS = [
   {
@@ -66,9 +69,10 @@ export default function Projects() {
           <h3 className="text-xs font-mono text-amber-500/70 uppercase tracking-[0.35em] mb-5">
             Operating Architecture
           </h3>
-          <h2 className="text-4xl md:text-6xl lg:text-7xl font-light text-white tracking-tight">
-            How I <span className="italic text-amber-500/90">Operate.</span>
-          </h2>
+          <SplitReveal
+            parts={["How I", { text: "Operate.", className: "font-display italic text-amber-400/90" }]}
+            className="text-4xl md:text-6xl lg:text-7xl font-light text-white tracking-tight"
+          />
           <p className="mt-6 text-white/40 font-light text-lg max-w-2xl mx-auto leading-relaxed">
             Eight lenses through which strategy becomes systems, and systems become outcomes.
           </p>
@@ -80,14 +84,14 @@ export default function Projects() {
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-50px" }}
-              transition={{ delay: i * 0.07, duration: 0.5 }}
+              transition={{ delay: (i % 4) * 0.08 + Math.floor(i / 4) * 0.12, duration: 0.8, ease: EASE }}
               key={project.id}
-              className="group relative rounded-2xl border border-white/5 bg-gradient-to-b from-white/[0.03] to-transparent backdrop-blur-xl overflow-hidden flex flex-col p-8 transition-all duration-500 hover:border-white/15 hover:bg-white/[0.04]"
             >
+            <TiltCard className="group rounded-2xl border border-white/5 bg-gradient-to-b from-white/[0.03] to-transparent backdrop-blur-xl overflow-hidden flex flex-col p-8 transition-colors duration-500 hover:border-amber-500/20 hover:bg-white/[0.04]">
               {/* Top accent line */}
               <div className="w-6 h-[1px] bg-amber-500/40 mb-8 group-hover:w-10 group-hover:bg-amber-500/70 transition-all duration-500" />
 
-              <div className="flex-1">
+              <div className="flex-1 relative" style={{ transform: "translateZ(30px)" }}>
                 <h4 className="text-lg font-light text-white/90 mb-1 leading-snug group-hover:text-white transition-colors">
                   {project.title}
                 </h4>
@@ -103,6 +107,7 @@ export default function Projects() {
               <div className="mt-8 text-[10px] font-mono text-white/15 group-hover:text-amber-500/30 transition-colors">
                 {String(project.id).padStart(2, "0")}
               </div>
+            </TiltCard>
             </motion.div>
           ))}
         </div>

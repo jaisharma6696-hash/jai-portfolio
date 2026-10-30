@@ -12,6 +12,8 @@ import MusicPlayer from "@/components/MusicPlayer";
 import Navigation from "@/components/Navigation";
 import Thinking from "@/components/Thinking";
 import Education from "@/components/Education";
+import Loader from "@/components/Loader";
+import SmoothScroll from "@/components/fx/SmoothScroll";
 import { MouseEvent } from "react";
 
 export default function Home() {
@@ -30,6 +32,10 @@ export default function Home() {
       onMouseMove={handleMouseMove}
       className="relative bg-slate-950 min-h-screen text-slate-50 selection:bg-white/20"
     >
+      <SmoothScroll />
+      <Loader />
+      <div aria-hidden className="grain" />
+
       {/* Global Cinematic Cursor Spotlight */}
       <div className="cursor-spotlight hidden md:block" />
 
